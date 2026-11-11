@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add a wish</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#10231C}a:hover{color:#0E3A2D}
+.press{transition:transform 160ms ease-out}
+.press:active{transform:scale(.97)}
+input::placeholder,textarea::placeholder{color:#5B7067}
+:focus-visible{outline:3px solid #D62F3A;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition-duration:.01ms !important}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #0A2B21; color: #10231C; font-family: 'DM Sans', system-ui, sans-serif; overflow: hidden">
+<div style="position: absolute; inset: 0; background: #F4F7F5; border-radius: 22px; transform: scale(0.96); transform-origin: 50% 0; overflow: hidden; display: flex; flex-direction: column">
+<div aria-hidden="true" style="height: 12px; flex-shrink: 0; background: repeating-linear-gradient(135deg, #D62F3A 0 14px, #FFFFFF 14px 28px)"></div>
+<div style="padding: 22px 20px; display: flex; flex-direction: column; gap: 14px">
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -0.02em">Your wishlist</h1>
+<p style="margin: 0; font-size: 14px; color: #40564D">Your Santa sees this. You won't know who they are.</p>
+<div style="background: #FFFFFF; border: 1.5px solid #DCE6E1; border-radius: 16px; padding: 14px; display: flex; justify-content: space-between; gap: 12px"><span style="font-size: 15px; font-weight: 700">Film for my old camera</span><span style="font-size: 13px; font-weight: 700">$18</span></div>
+<div style="background: #FFFFFF; border: 1.5px solid #DCE6E1; border-radius: 16px; padding: 14px; display: flex; justify-content: space-between; gap: 12px"><span style="font-size: 15px; font-weight: 700">Hot sauce, the hotter the better</span><span style="font-size: 13px; font-weight: 700">$12</span></div>
+</div>
+</div>
+<div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(10, 43, 33, 0.6)"></div>
+<div role="dialog" aria-label="Add a wish" style="position: absolute; left: 0; right: 0; bottom: 0; background: #FFFFFF; border-radius: 28px 28px 0 0; padding: 10px 20px 28px; display: flex; flex-direction: column; gap: 14px">
+<span aria-hidden="true" style="align-self: center; width: 44px; height: 5px; border-radius: 999px; background: #B7C7BF"></span>
+<h2 style="margin: 4px 0 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 26px; letter-spacing: -0.02em">Add a wish</h2>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="wish-what" style="font-size: 13px; font-weight: 500; color: #40564D">What would you like?</label>
+<input id="wish-what" type="text" value="A proper chef's knife" style="height: 52px; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #9DB5AA; background: #F4F7F5; color: #10231C; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+<div style="display: flex; gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 0; min-width: 0">
+<label for="wish-link" style="font-size: 13px; font-weight: 500; color: #40564D">Link (optional)</label>
+<input id="wish-link" type="url" placeholder="https://" style="height: 52px; width: 100%; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #9DB5AA; background: #F4F7F5; color: #10231C; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; width: 104px; flex-shrink: 0">
+<label for="wish-price" style="font-size: 13px; font-weight: 500; color: #40564D">About</label>
+<input id="wish-price" type="text" inputmode="decimal" value="$30" style="height: 52px; width: 100%; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #9DB5AA; background: #F4F7F5; color: #10231C; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="wish-note" style="font-size: 13px; font-weight: 500; color: #40564D">Note for your Santa</label>
+<textarea id="wish-note" rows="2" placeholder="Sizes, colours, things to avoid" style="box-sizing: border-box; border-radius: 14px; border: 1.5px solid #9DB5AA; background: #F4F7F5; color: #10231C; font: inherit; font-size: 16px; padding: 12px 16px; resize: none"></textarea>
+</div>
+<div style="display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: #FFF1CF; font-size: 13px; color: #10231C">
+<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10231C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16.5v.01"/></svg>
+<span>Right at the $30 limit for this group.</span>
+</div>
+<button type="button" class="press" style="height: 58px; border: 0; border-radius: 18px; background: #D62F3A; color: #FFFFFF; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 19px; cursor: pointer">Add to wishlist</button>
+<a href="Match.dc.html" style="min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700">Cancel</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

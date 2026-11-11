@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Join the draw</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#FFFFFF}
+.press{transition:transform 160ms ease-out}
+.press:active{transform:scale(.97)}
+input::placeholder{color:#8FB0A2}
+:focus-visible{outline:3px solid #F4B83A;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition-duration:.01ms !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0E3A2D; color: #FFFFFF; font-family: 'DM Sans', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+<div aria-hidden="true" style="height: 12px; flex-shrink: 0; background: repeating-linear-gradient(135deg, #D62F3A 0 14px, #FFFFFF 14px 28px)"></div>
+<div style="flex-grow: 1; padding: 24px 24px 28px; display: flex; flex-direction: column; gap: 22px">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg aria-hidden="true" width="34" height="34" viewBox="0 0 34 34"><path d="M6 25 C8 12 16 5 25 6 C22 12 25 18 28 25 Z" fill="#D62F3A"/><rect x="3" y="23" width="28" height="8" rx="4" fill="#FFFFFF"/><circle cx="26" cy="6" r="4" fill="#FFFFFF"/></svg>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 24px; letter-spacing: -0.01em">Hatful</span>
+</div>
+<div style="position: relative; margin-top: 26px">
+<svg aria-hidden="true" width="120" height="60" viewBox="0 0 120 60" style="position: absolute; left: 20px; top: -44px"><path d="M22 58 C10 30 40 10 110 2" fill="none" stroke="#F4B83A" stroke-width="3" stroke-linecap="round"/></svg>
+<div style="background: #FFFFFF; color: #10231C; border-radius: 22px; padding: 26px 24px 24px; transform: rotate(-3deg); display: flex; flex-direction: column; gap: 14px; box-shadow: 0 18px 0 #0A2B21">
+<div style="display: flex; align-items: center; gap: 12px">
+<span aria-hidden="true" style="width: 20px; height: 20px; border-radius: 50%; background: #0E3A2D; flex-shrink: 0"></span>
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #C22630">You're invited</span>
+</div>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 38px; line-height: 1.02; letter-spacing: -0.02em">Sunday Dinner Club Secret Santa</h1>
+<p style="margin: 0; font-size: 15px; color: #40564D">Amara is organising. Put your name in the hat.</p>
+<div style="display: flex; gap: 8px; flex-wrap: wrap">
+<span style="font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 999px; background: #E3EEE9; color: #10231C">8 people</span>
+<span style="font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 999px; background: #E3EEE9; color: #10231C">$30 limit</span>
+<span style="font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 999px; background: #F4B83A; color: #10231C">Swap Sat 19 Dec</span>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 14px; margin-top: 22px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="join-name" style="font-size: 13px; font-weight: 500; color: #C4DACF">Your name</label>
+<input id="join-name" type="text" value="Tunde" autocomplete="given-name" style="height: 52px; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #3C7361; background: #0A2B21; color: #FFFFFF; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="join-email" style="font-size: 13px; font-weight: 500; color: #C4DACF">Email</label>
+<input id="join-email" type="email" placeholder="you@example.com" autocomplete="email" style="height: 52px; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #3C7361; background: #0A2B21; color: #FFFFFF; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+</div>
+<div style="flex-grow: 1"></div>
+<a class="press" href="Lobby.dc.html" style="height: 58px; border-radius: 18px; background: #D62F3A; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 19px">Join the draw</a>
+<p style="margin: 0; font-size: 13px; line-height: 1.45; color: #C4DACF; text-align: center">We'll email you a sign-in link. Your match is visible only to you, not even to Amara.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

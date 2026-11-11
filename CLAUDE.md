@@ -8,18 +8,19 @@ with RLS, Realtime), Motion, Sonner, Vaul. Deployed on Vercel.
 
 ## Status
 
-Nothing is built yet. This repo holds the handover only:
+Build steps 1 to 7 are done. Steps 8 (motion and reduced-motion pass) and 9 (deploy) remain.
 
-- `supabase/migrations/` — schema, RLS policies and functions. Written but NOT yet run
-  against a database. Test them first (build step 1).
+- Every screen in the design canvas is built: Landing, Start a group, Join, Lobby
+  (with the organiser's Draw names and house rules), Draw, Match and Wishlist.
+- `supabase/migrations/` holds 0001 to 0006, applied and tested locally
+  (`supabase/tests/`). 0006 adds `assignments.bought_at` and `set_gift_bought` for
+  "Mark gift as bought"; the hosted project needs it before deploying.
 - `docs/design/canvas.json` — the design canvas index: board order, titles and the motion
   notes for each screen.
-- `docs/design/*.dc.html` — the five approved screens (Join, Lobby, Draw, Match,
-  Wishlist). These are mockups written for a design-canvas runtime: `{{holes}}`,
-  `<sc-if>`, `<sc-for>` and `./support.js` are that runtime's syntax. Do not run them.
-  Read them for exact markup, copy, colours, sizes and animation timings, and rebuild
-  each as React + Tailwind. `Draw.dc.html` contains the working logic for the
-  hold-to-unwrap interaction.
+- `docs/design/*.dc.html` — the seven approved screens. These are mockups written for a
+  design-canvas runtime: `{{holes}}`, `<sc-if>`, `<sc-for>` and `./support.js` are that
+  runtime's syntax. Do not run them. Read them for exact markup, copy, colours, sizes and
+  animation timings when changing a screen.
 - `docs/architecture.md` — the full architecture doc, if present (exported by the owner).
 
 ## Rules that must never be broken
@@ -38,8 +39,8 @@ Nothing is built yet. This repo holds the handover only:
 
 ```
 app/
-  page.tsx                 landing, "Start a group"
-  new/page.tsx             create group form
+  page.tsx                 landing, names in the hat               (design: Landing)
+  new/page.tsx             create group form + invite preview      (design: NewGroup)
   join/[code]/page.tsx     invite card, name + email            (design: Main)
   auth/confirm/route.ts    magic link callback, then join_group
   g/[id]/layout.tsx        loads group + my member row, 404 if not a member
@@ -48,10 +49,12 @@ app/
   g/[id]/match/page.tsx    receiver, note, wishlist              (design: Match)
   g/[id]/wishlist/page.tsx my wishes + add drawer                (design: Wishlist)
   actions.ts               createGroup, requestMagicLink, drawNames, revealMatch,
-                           addWish, removeWish, toggleClaim
-components/                lobby-live.tsx, unwrap.tsx, wish-drawer.tsx, gift-tag.tsx,
-                           icons.tsx (all artwork from the designs: hat logo, tag string,
-                           no-entry, lock, info)
+                           addRule, removeRule, addWish, removeWish, saveNote,
+                           toggleClaim, setGiftBought
+components/                lobby-live.tsx, draw-names.tsx, house-rules.tsx, unwrap.tsx,
+                           gift-tag.tsx, match-wishes.tsx, days-to-go.tsx,
+                           wish-drawer.tsx, hat-of-names.tsx, icons.tsx (all artwork
+                           from the designs: hat logo, tag string, no-entry, lock, info)
 lib/supabase/              server.ts, client.ts, middleware.ts  (@supabase/ssr)
 proxy.ts                   Next 16's name for middleware.ts; calls lib/supabase/middleware.ts
 ```

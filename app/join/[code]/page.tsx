@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatMoney, formatSwapDate } from "@/lib/format";
+import { formatMoney, formatSwapDate, inviteTitle } from "@/lib/format";
 import { TagString } from "@/components/icons";
 import { Wordmark } from "@/components/wordmark";
 import { JoinForm } from "./join-form";
@@ -63,7 +63,7 @@ async function Invite({
     );
   }
 
-  const title = /secret santa/i.test(invite.name) ? invite.name : `${invite.name} Secret Santa`;
+  const title = inviteTitle(invite.name);
   const organiser = invite.organiser ?? "the organiser";
 
   return (

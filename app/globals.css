@@ -90,6 +90,13 @@ body {
 .digit-in  { animation: digit-in 200ms ease-out both; }
 .digit-out { animation: digit-out 200ms ease-out both; }
 
+/* Landing: the last name tag drops into the hat once on load. `translate` leaves its rotate alone. */
+@keyframes tag-fall {
+  from { opacity: 0; translate: 0 -24px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+.tag-fall { animation: tag-fall 600ms var(--ease-spring) both; }
+
 /* Wishlist: a saved wish grows into the list by height. */
 @keyframes grow-in {
   from { grid-template-rows: 0fr; opacity: 0; }
@@ -123,6 +130,7 @@ body {
   @keyframes enter-up  { from { opacity: 0; } to { opacity: 1; } }
   @keyframes digit-in  { from { opacity: 0; } to { opacity: 1; } }
   @keyframes digit-out { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes tag-fall  { from { opacity: 0; } to { opacity: 1; } }
   @keyframes grow-in   { from { opacity: 0; } to { opacity: 1; } }
   @keyframes tick-draw { from { opacity: 0; } to { opacity: 1; } }
   ::view-transition-group(*),

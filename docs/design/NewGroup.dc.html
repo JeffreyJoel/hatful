@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Start a group</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#FFFFFF}
+.press{transition:transform 160ms ease-out}
+.press:active{transform:scale(.97)}
+input{color-scheme:dark}
+input::placeholder{color:#8FB0A2}
+:focus-visible{outline:3px solid #F4B83A;outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition-duration:.01ms !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: #0E3A2D; color: #FFFFFF; font-family: 'DM Sans', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+<div aria-hidden="true" style="height: 12px; flex-shrink: 0; background: repeating-linear-gradient(135deg, #D62F3A 0 14px, #FFFFFF 14px 28px)"></div>
+<div style="flex-grow: 1; padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+<div style="display: flex; align-items: center; gap: 10px">
+<svg aria-hidden="true" width="34" height="34" viewBox="0 0 34 34"><path d="M6 25 C8 12 16 5 25 6 C22 12 25 18 28 25 Z" fill="#D62F3A"/><rect x="3" y="23" width="28" height="8" rx="4" fill="#FFFFFF"/><circle cx="26" cy="6" r="4" fill="#FFFFFF"/></svg>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 24px; letter-spacing: -0.01em">Hatful</span>
+</div>
+<a href="Landing.dc.html" style="min-height: 44px; display: flex; align-items: center; font-size: 14px; font-weight: 700; color: #C4DACF">Cancel</a>
+</div>
+<h1 style="margin: 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 34px; line-height: 1.02; letter-spacing: -0.02em">Start a group</h1>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 13px; color: #C4DACF">Your invite will look like this</span>
+<div style="background: #FFFFFF; color: #10231C; border-radius: 18px; padding: 16px 18px; transform: rotate(-1.5deg); display: flex; flex-direction: column; gap: 8px; box-shadow: 0 10px 0 #0A2B21">
+<div style="display: flex; align-items: center; gap: 10px">
+<span aria-hidden="true" style="width: 14px; height: 14px; border-radius: 50%; background: #0E3A2D; flex-shrink: 0"></span>
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #C22630">You're invited</span>
+</div>
+<span style="font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 800; font-size: 25px; line-height: 1.05; letter-spacing: -0.02em; overflow-wrap: anywhere">{{title}}</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<sc-if value="{{hasLimit}}" hint-placeholder-val="{{true}}">
+<span style="font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: #E3EEE9; color: #10231C">{{limit}} limit</span>
+</sc-if>
+<sc-if value="{{hasDate}}" hint-placeholder-val="{{true}}">
+<span style="font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: #F4B83A; color: #10231C">Swap {{date}}</span>
+</sc-if>
+<sc-if value="{{noChips}}" hint-placeholder-val="{{false}}">
+<span style="font-size: 12px; color: #40564D">Add a limit or swap day and they'll show here.</span>
+</sc-if>
+</div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="new-group" style="font-size: 13px; font-weight: 500; color: #C4DACF">Group name</label>
+<input id="new-group" type="text" value="{{group}}" onChange="{{onGroup}}" placeholder="Sunday Dinner Club" style="height: 50px; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #3C7361; background: #0A2B21; color: #FFFFFF; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+<div style="display: flex; gap: 10px">
+<div style="display: flex; flex-direction: column; gap: 6px; flex: 1 1 0; min-width: 0">
+<label for="new-name" style="font-size: 13px; font-weight: 500; color: #C4DACF">Your name</label>
+<input id="new-name" type="text" value="Amara" autocomplete="given-name" style="height: 50px; width: 100%; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #3C7361; background: #0A2B21; color: #FFFFFF; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; width: 104px; flex-shrink: 0">
+<label for="new-limit" style="font-size: 13px; font-weight: 500; color: #C4DACF">Limit</label>
+<input id="new-limit" type="text" inputmode="decimal" value="{{limitRaw}}" onChange="{{onLimit}}" placeholder="$30" style="height: 50px; width: 100%; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #3C7361; background: #0A2B21; color: #FFFFFF; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="new-date" style="font-size: 13px; font-weight: 500; color: #C4DACF">Swap day</label>
+<input id="new-date" type="date" value="{{dateRaw}}" onChange="{{onDate}}" style="height: 50px; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #3C7361; background: #0A2B21; color: #FFFFFF; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label for="new-email" style="font-size: 13px; font-weight: 500; color: #C4DACF">Your email</label>
+<input id="new-email" type="email" placeholder="you@example.com" autocomplete="email" style="height: 50px; box-sizing: border-box; border-radius: 14px; border: 1.5px solid #3C7361; background: #0A2B21; color: #FFFFFF; font: inherit; font-size: 16px; padding: 0 16px">
+</div>
+</div>
+<div style="flex-grow: 1"></div>
+<a class="press" href="Lobby.dc.html" style="height: 58px; flex-shrink: 0; border-radius: 18px; background: #D62F3A; color: #FFFFFF; text-decoration: none; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', system-ui, sans-serif; font-weight: 700; font-size: 19px">Create group</a>
+<p style="margin: 0; font-size: 13px; line-height: 1.45; color: #C4DACF; text-align: center">You'll run the draw. Your own match stays hidden from you too, until you unwrap it.</p>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { group: 'Sunday Dinner Club', limitRaw: '$30', dateRaw: '2026-12-19' };
+this.onGroup = (e) => this.setState({ group: e.target.value });
+this.onLimit = (e) => this.setState({ limitRaw: e.target.value });
+this.onDate = (e) => this.setState({ dateRaw: e.target.value });
+}
+renderVals() {
+const s = this.state;
+const name = s.group.trim() || 'Your group';
+const title = /secret santa/i.test(name) ? name : name + ' Secret Santa';
+const cleaned = s.limitRaw.replace(/[$,\s]/g, '');
+const ok = /^\d+(\.\d{1,2})?$/.test(cleaned) && Number(cleaned) > 0;
+const limit = ok ? '$' + (Number(cleaned) % 1 === 0 ? Number(cleaned) : Number(cleaned).toFixed(2)) : '';
+let date = '';
+if (/^\d{4}-\d{2}-\d{2}$/.test(s.dateRaw)) {
+date = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+.format(new Date(s.dateRaw + 'T00:00:00Z')).replace(',', '');
+}
+return {
+group: s.group, limitRaw: s.limitRaw, dateRaw: s.dateRaw,
+title: title, limit: limit, date: date,
+hasLimit: !!limit, hasDate: !!date, noChips: !limit && !date,
+onGroup: this.onGroup, onLimit: this.onLimit, onDate: this.onDate
+};
+}
+}
+</script>
+</body>
+</html>

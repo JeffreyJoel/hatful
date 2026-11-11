@@ -5,15 +5,19 @@
   "launch": {"view": "canvas"},
   "pages": [],
   "boards": {
-    "Main.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "1 · Join", "is_interactive": true, "radius": 28},
-    "Lobby.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "2 · Lobby", "is_interactive": true, "radius": 28},
-    "Draw.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "3 · The draw (play me)", "is_interactive": true, "radius": 28},
-    "Match.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 · Your match", "is_interactive": true, "radius": 28},
-    "Wishlist.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "5 · Add a wish", "is_interactive": true, "radius": 28}
+    "Landing.dc.html": {"x": -940, "y": 0, "w": 390, "h": 844, "title": "1 · Landing", "radius": 28},
+    "NewGroup.dc.html": {"x": -470, "y": 0, "w": 390, "h": 844, "title": "2 · Start a group (type in it)", "is_interactive": true, "radius": 28},
+    "Main.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "3 · Join", "is_interactive": true, "radius": 28},
+    "Lobby.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "4 · Lobby", "is_interactive": true, "radius": 28},
+    "Draw.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "5 · The draw (play me)", "is_interactive": true, "radius": 28},
+    "Match.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "6 · Your match", "is_interactive": true, "radius": 28},
+    "Wishlist.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "7 · Add a wish", "is_interactive": true, "radius": 28}
   },
-  "order": ["Main.dc.html", "Lobby.dc.html", "Draw.dc.html", "Match.dc.html", "Wishlist.dc.html"],
+  "order": ["Landing.dc.html", "NewGroup.dc.html", "Main.dc.html", "Lobby.dc.html", "Draw.dc.html", "Match.dc.html", "Wishlist.dc.html"],
   "notes": {
-    "title": {"x": 0, "y": -300, "text": "Hatful · Secret Santa draw", "kind": "title1", "maxW": 2270},
+    "title": {"x": -940, "y": -300, "text": "Hatful · Secret Santa draw", "kind": "title1", "maxW": 3210},
+    "m6": {"x": -940, "y": 924, "w": 390, "fill": "green", "text": "Motion\nOn load, once: the falling Tunde tag drops into the hat, 600ms on cubic-bezier(.34,1.56,.64,1), starting at translateY(-24px) and opacity 0. Everything else is still. Reduced motion: fade only."},
+    "m7": {"x": -470, "y": 924, "w": 390, "fill": "green", "text": "Behaviour\nThe preview tag is the same card invitees see on Join, and it updates as you type with no animation. Signed-in organisers skip the email field. The magic link creates the group on arrival."},
     "m1": {"x": 0, "y": 924, "w": 390, "fill": "green", "text": "Motion\nInvite tag drops in once on load: 400ms ease-out, rotate -8deg to -3deg, opacity 0 to 1. Buttons press to scale 0.97 in 160ms. Nothing animates while typing."},
     "m2": {"x": 470, "y": 924, "w": 390, "fill": "green", "text": "Motion\nMembers arrive over Supabase Realtime. A new tag enters with opacity + translateY(8px), 250ms ease-out, 40ms stagger. The counter swaps digits with a short blur crossfade. Sonner toast: \"Leo unwrapped theirs\"."},
     "m3": {"x": 940, "y": 924, "w": 390, "fill": "red", "text": "Play this one\nHold fills through clip-path (1.1s linear). Letting go snaps back in 200ms ease-out, so it is always interruptible. Lid leaves in 500ms on cubic-bezier(.22,1,.36,1), tag springs out with a little overshoot. Only transform, opacity and clip-path move."},

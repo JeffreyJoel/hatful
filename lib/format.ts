@@ -27,3 +27,8 @@ export function parseMoney(raw: string): number | null | "bad" {
   const cents = Math.round(Number(cleaned) * 100);
   return cents > 0 && cents <= 100_000_00 ? cents : "bad";
 }
+
+// The invite card's title: "Sunday Dinner Club Secret Santa", unless the name already says it.
+export function inviteTitle(name: string) {
+  return /secret santa/i.test(name) ? name : `${name} Secret Santa`;
+}

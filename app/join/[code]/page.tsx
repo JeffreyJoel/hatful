@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney, formatSwapDate } from "@/lib/format";
+import { TagString } from "@/components/icons";
 import { Wordmark } from "@/components/wordmark";
 import { JoinForm } from "./join-form";
 
@@ -68,22 +69,8 @@ async function Invite({
   return (
     <>
       <div className="relative mt-[26px]">
-        <svg
-          aria-hidden="true"
-          width="120"
-          height="60"
-          viewBox="0 0 120 60"
-          className="absolute left-5 -top-11"
-        >
-          <path
-            d="M22 58 C10 30 40 10 110 2"
-            fill="none"
-            stroke="#F4B83A"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
-        <div className="flex -rotate-3 flex-col gap-3.5 rounded-[22px] bg-card px-6 pt-[26px] pb-6 text-ink shadow-[0_18px_0_var(--spruce-deep)]">
+        <TagString className="absolute left-5 -top-11" />
+        <div className="tag-drop flex -rotate-3 flex-col gap-3.5 rounded-[22px] bg-card px-6 pt-[26px] pb-6 text-ink shadow-[0_18px_0_var(--spruce-deep)]">
           <div className="flex items-center gap-3">
             <span aria-hidden="true" className="size-5 shrink-0 rounded-full bg-spruce" />
             <span className="text-xs font-bold tracking-[0.12em] text-berry-text uppercase">

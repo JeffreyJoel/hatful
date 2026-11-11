@@ -5,6 +5,7 @@ import { formatMoney, formatSwapDate } from "@/lib/format";
 import { primaryOnSnow } from "@/lib/ui";
 import { LobbyLive, type LobbyMember } from "@/components/lobby-live";
 import { InviteLink } from "@/components/invite-link";
+import { NoEntryIcon } from "@/components/icons";
 
 export default async function LobbyPage({ params }: PageProps<"/g/[id]">) {
   const { id } = await params;
@@ -63,10 +64,7 @@ export default async function LobbyPage({ params }: PageProps<"/g/[id]">) {
               key={`${r.member_a}-${r.member_b}`}
               className="flex items-center gap-2.5 rounded-2xl border-[1.5px] border-dashed border-[#9DB5AA] px-3.5 py-3"
             >
-              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10231C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-                <circle cx="12" cy="12" r="9" />
-                <path d="M5.6 5.6l12.8 12.8" />
-              </svg>
+              <NoEntryIcon className="shrink-0 text-ink" />
               <span className="text-[13px] leading-[1.4]">
                 House rule: {nameOf.get(r.member_a)} and {nameOf.get(r.member_b)} can&apos;t draw
                 each other.

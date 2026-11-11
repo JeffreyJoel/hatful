@@ -59,17 +59,41 @@ body {
   }
 }
 
-/* Lobby: a new member fades up into the grid. */
+/* Join: the invite tag drops in once on load. Tailwind's -rotate-3 sets `rotate`, so animate that. */
+@keyframes tag-drop {
+  from { opacity: 0; rotate: -8deg; }
+  to   { opacity: 1; rotate: -3deg; }
+}
+.tag-drop {
+  animation: tag-drop 400ms ease-out both;
+}
+
+/* Lobby: a new member fades up into the grid; arrivals in one batch stagger by 40ms. */
 @keyframes enter-up {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: none; }
 }
 .enter-up {
   animation: enter-up 250ms var(--ease-out) both;
+  animation-delay: var(--stagger, 0ms);
 }
+
+/* Lobby counters: old and new digits crossfade through a short blur. */
+@keyframes digit-in {
+  from { opacity: 0; filter: blur(4px); }
+  to   { opacity: 1; filter: blur(0); }
+}
+@keyframes digit-out {
+  from { opacity: 1; filter: blur(0); }
+  to   { opacity: 0; filter: blur(4px); }
+}
+.digit-in  { animation: digit-in 200ms ease-out both; }
+.digit-out { animation: digit-out 200ms ease-out both; }
+
+/* Reduced motion keeps the fades and drops movement and blur. */
 @media (prefers-reduced-motion: reduce) {
-  @keyframes enter-up {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
+  @keyframes tag-drop  { from { opacity: 0; rotate: -3deg; } to { opacity: 1; rotate: -3deg; } }
+  @keyframes enter-up  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes digit-in  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes digit-out { from { opacity: 1; } to { opacity: 0; } }
 }

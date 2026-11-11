@@ -34,8 +34,22 @@ export function LobbyLive({
   drawnAt: string | null;
 }) {
   const router = useRouter();
-  // Members present on first paint don't animate; anyone who arrives later fades in.
-  const [firstIds] = useState(() => new Set(members.map((m) => m.id)));
+  // Members on first paint don't animate; each later batch of arrivals fades in 40ms apart.
+  const [arrivals, setArrivals] = useState(() => ({
+    first: new Set(members.map((m) => m.id)),
+    seen: new Set(members.map((m) => m.id)),
+    delay: new Map<string, number>(),
+  }));
+  const newcomers = members.filter((m) => !arrivals.seen.has(m.id));
+  if (newcomers.length) {
+    const delay = new Map(arrivals.delay);
+    newcomers.forEach((m, i) => delay.set(m.id, i * 40));
+    setArrivals({
+      first: arrivals.first,
+      seen: new Set([...arrivals.seen, ...newcomers.map((m) => m.id)]),
+      delay,
+    });
+  }
 
   // Toasts come from comparing each server refresh with the last, not from event
   // payloads: a removal before the draw sends no event we can receive.
@@ -46,7 +60,7 @@ export function LobbyLive({
     for (const m of members) {
       const was = before.get(m.id);
       if (!was) toast(`${m.name} joined`);
-      else if (!m.isMe && m.unwrapped && !was.unwrapped) toast(`${m.name} unwrapped their match`);
+      else if (!m.isMe && m.unwrapped && !was.unwrapped) toast(`${m.name} unwrapped theirs`);
     }
     for (const m of previous.current) if (!now.has(m.id)) toast(`${m.name} left the group`);
     previous.current = members;
@@ -113,14 +127,14 @@ export function LobbyLive({
                 ))}
               </div>
               <span className="shrink-0 text-[13px] font-bold tabular-nums">
-                {unwrapped} of {members.length} unwrapped
+                <SwapNumber value={unwrapped} /> of <SwapNumber value={members.length} /> unwrapped
               </span>
             </div>
           </>
         ) : (
           <>
             <h2 className="font-display text-[34px] leading-none font-extrabold tracking-[-0.02em] tabular-nums">
-              {members.length} in the hat
+              <SwapNumber value={members.length} /> in the hat
             </h2>
             <p className="text-sm leading-[1.45] text-on-spruce-soft">
               {amOwner
@@ -137,7 +151,8 @@ export function LobbyLive({
         {members.map((m, i) => (
           <li
             key={m.id}
-            className={`flex items-center gap-2.5 rounded-2xl border-[1.5px] border-card-line bg-card px-3 py-2.5 ${firstIds.has(m.id) ? "" : "enter-up"}`}
+            className={`flex items-center gap-2.5 rounded-2xl border-[1.5px] border-card-line bg-card px-3 py-2.5 ${arrivals.first.has(m.id) ? "" : "enter-up"}`}
+            style={{ "--stagger": `${arrivals.delay.get(m.id) ?? 0}ms` } as React.CSSProperties}
           >
             <span
               aria-hidden="true"
@@ -162,6 +177,30 @@ function status(m: LobbyMember, drawn: boolean) {
   if (drawn) who.push(m.unwrapped ? "unwrapped" : "still wrapped");
   const text = who.join(" · ") || "In the hat";
   return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// A number whose old and new digits crossfade when it changes.
+function SwapNumber({ value }: { value: number }) {
+  const [shown, setShown] = useState<{ now: number; prev: number | null }>({ now: value, prev: null });
+  if (shown.now !== value) setShown({ now: value, prev: shown.now });
+
+  return (
+    <span className="inline-grid">
+      {shown.prev !== null && (
+        <span
+          key={`out-${shown.prev}-${shown.now}`}
+          aria-hidden="true"
+          className="digit-out [grid-area:1/1]"
+          onAnimationEnd={() => setShown((s) => ({ ...s, prev: null }))}
+        >
+          {shown.prev}
+        </span>
+      )}
+      <span key={shown.now} className={`[grid-area:1/1] ${shown.prev !== null ? "digit-in" : ""}`}>
+        {shown.now}
+      </span>
+    </span>
+  );
 }
 
 const noop = () => () => {};

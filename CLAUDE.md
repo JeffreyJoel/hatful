@@ -12,6 +12,8 @@ Nothing is built yet. This repo holds the handover only:
 
 - `supabase/migrations/` — schema, RLS policies and functions. Written but NOT yet run
   against a database. Test them first (build step 1).
+- `docs/design/canvas.json` — the design canvas index: board order, titles and the motion
+  notes for each screen.
 - `docs/design/*.dc.html` — the five approved screens (Join, Lobby, Draw, Match,
   Wishlist). These are mockups written for a design-canvas runtime: `{{holes}}`,
   `<sc-if>`, `<sc-for>` and `./support.js` are that runtime's syntax. Do not run them.
@@ -47,7 +49,9 @@ app/
   g/[id]/wishlist/page.tsx my wishes + add drawer                (design: Wishlist)
   actions.ts               createGroup, requestMagicLink, drawNames, revealMatch,
                            addWish, removeWish, toggleClaim
-components/                lobby-live.tsx, unwrap.tsx, wish-drawer.tsx, gift-tag.tsx
+components/                lobby-live.tsx, unwrap.tsx, wish-drawer.tsx, gift-tag.tsx,
+                           icons.tsx (all artwork from the designs: hat logo, tag string,
+                           no-entry, lock, info)
 lib/supabase/              server.ts, client.ts, middleware.ts  (@supabase/ssr)
 proxy.ts                   Next 16's name for middleware.ts; calls lib/supabase/middleware.ts
 ```
@@ -92,8 +96,20 @@ Gold is a fill with ink text on it, never text on white. No emoji.
 - Draw screen: hold fills via `clip-path` 1100ms linear; release snaps back 200ms
   ease-out; lid exits 500ms `--ease-out`; tag rises 600ms `--ease-spring` after 120ms;
   10 confetti pieces 800ms `--ease-burst` with 20ms stagger.
-- Lobby: new member fades in with `translateY(8px)`, 250ms; Sonner toast on change.
-- Wishlist: Vaul drawer, page behind scales to 0.96.
+- Join: the invite tag drops in once on load, 400ms ease-out, rotate -8deg to -3deg,
+  opacity 0 to 1. Nothing animates while typing.
+- Lobby: new member fades in with `translateY(8px)`, 250ms ease-out, 40ms stagger per
+  batch. Counters swap digits with a short blur crossfade. Sonner toast on change
+  ("Leo unwrapped theirs").
+- Match: the name tag carries over from the Draw screen as a shared element (Motion
+  `layoutId`); the tick draws in 150ms.
+- Wishlist: Vaul drawer follows the finger, dismisses on velocity, settles in 500ms on
+  `--ease-drawer`; the page behind scales to 0.96. A saved wish grows into the list by height.
+
+These come from the sticky notes in `docs/design/canvas.json` (the design canvas index).
+Three of them knowingly break the general rules above; they are design decisions, keep them:
+the Join tag runs 400ms (over 300ms), the Lobby counter animates `filter: blur`, and a new
+wish animates height. Reduced motion drops the movement and blur and keeps the fades.
 
 ## Build order
 

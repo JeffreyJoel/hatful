@@ -12,3 +12,10 @@ export const primaryOnSpruce = `${primaryButton} ${focusGold}`;
 export const primaryOnSnow = `${primaryButton} ${focusBerry}`;
 
 export const alertBox = "rounded-xl bg-gold px-3 py-2.5 text-[13px] text-ink";
+
+// Inputs on snow and white surfaces (Wishlist, Lobby).
+export const fieldOnSnow = `h-[52px] w-full rounded-[14px] border-[1.5px] border-[#9DB5AA] bg-snow px-4 text-base text-ink placeholder:text-[#5B7067] ${focusBerry}`;
+export const labelOnSnow = "text-[13px] font-medium text-ink-soft";
+
+export const secondaryOnSnow = `press flex h-[58px] w-full items-center justify-center rounded-[18px] border-[1.5px] border-ink bg-card font-display text-[19px] font-bold text-ink disabled:opacity-60 ${focusBerry}`;
+export const textLinkOnSnow = `flex min-h-11 items-center justify-center text-sm font-bold text-ink underline ${focusBerry}`;

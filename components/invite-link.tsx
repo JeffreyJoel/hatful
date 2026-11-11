@@ -1,9 +1,18 @@
 "use client";
 
 import { toast } from "sonner";
-import { primaryOnSnow } from "@/lib/ui";
+import { primaryOnSnow, secondaryOnSnow } from "@/lib/ui";
 
-export function InviteLink({ code, groupName }: { code: string; groupName: string }) {
+// `secondary` steps the button back once "Draw names" is the organiser's main action.
+export function InviteLink({
+  code,
+  groupName,
+  secondary = false,
+}: {
+  code: string;
+  groupName: string;
+  secondary?: boolean;
+}) {
   const url = `${process.env.NEXT_PUBLIC_SITE_URL}/join/${code}`;
 
   async function share() {
@@ -29,7 +38,7 @@ export function InviteLink({ code, groupName }: { code: string; groupName: strin
       <p className="truncate rounded-2xl border-[1.5px] border-card-line bg-card px-3.5 py-3 text-[13px] text-ink-soft select-all">
         {url}
       </p>
-      <button type="button" onClick={share} className={primaryOnSnow}>
+      <button type="button" onClick={share} className={secondary ? secondaryOnSnow : primaryOnSnow}>
         Share invite link
       </button>
     </div>

@@ -58,3 +58,18 @@ body {
     transition-delay: 0ms !important;
   }
 }
+
+/* Lobby: a new member fades up into the grid. */
+@keyframes enter-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.enter-up {
+  animation: enter-up 250ms var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes enter-up {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}

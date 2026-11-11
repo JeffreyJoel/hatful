@@ -1,9 +1,12 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 // One client per request, always as the signed-in user (anon key, never service role).
 export async function createClient() {
+  // Session checks read the clock; keep them at request time, never in a prefetch prerender.
+  await connection();
   const cookieStore = await cookies();
 
   return createServerClient(

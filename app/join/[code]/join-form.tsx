@@ -1,13 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { requestMagicLink, type JoinState } from "@/app/actions";
-
-const field =
-  "h-[52px] rounded-[14px] border-[1.5px] border-spruce-line bg-spruce-deep px-4 text-base text-white placeholder:text-[#8FB0A2] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-gold";
-const label = "text-[13px] font-medium text-on-spruce-soft";
-const primary =
-  "press flex h-[58px] items-center justify-center rounded-[18px] bg-berry font-display text-[19px] font-bold text-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-gold disabled:opacity-70";
+import { startTransition, useActionState, useState } from "react";
+import { requestMagicLink, type FormState } from "@/app/actions";
+import { CheckEmail } from "@/components/check-email";
+import { alertBox, fieldOnSpruce as field, labelOnSpruce as label, primaryOnSpruce as primary } from "@/lib/ui";
 
 export function JoinForm({
   code,
@@ -20,30 +16,18 @@ export function JoinForm({
   signedInEmail: string | null;
   linkExpired: boolean;
 }) {
-  const [state, action, pending] = useActionState<JoinState, FormData>(requestMagicLink, {
+  const [state, action, pending] = useActionState<FormState, FormData>(requestMagicLink, {
     status: "idle",
   });
   const [retrying, setRetrying] = useState(false);
 
   if (state.status === "sent" && !retrying) {
     return (
-      <div className="mt-[22px] flex flex-1 flex-col gap-3" aria-live="polite">
-        <h2 className="font-display text-[26px] leading-[1.1] font-extrabold tracking-[-0.02em]">
-          Check your email
-        </h2>
-        <p className="text-[15px] leading-[1.45] text-on-spruce-soft">
-          We sent a sign-in link to <span className="font-bold text-white">{state.email}</span>.
-          Open it on any device and your name goes in the hat.
-        </p>
-        <div className="flex-1" />
-        <button
-          type="button"
-          onClick={() => setRetrying(true)}
-          className="press min-h-11 text-sm font-bold text-on-spruce-soft"
-        >
-          Use a different email
-        </button>
-      </div>
+      <CheckEmail
+        email={state.email}
+        outcome="your name goes in the hat"
+        onRetry={() => setRetrying(true)}
+      />
     );
   }
 
@@ -55,7 +39,17 @@ export function JoinForm({
         : null;
 
   return (
-    <form action={(data) => { setRetrying(false); return action(data); }} className="flex flex-1 flex-col gap-[22px]">
+    <form
+      action={action}
+      onSubmit={(e) => {
+        // Submitting here rather than via `action` stops React clearing the fields on an error.
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        setRetrying(false);
+        startTransition(() => action(data));
+      }}
+      className="flex flex-1 flex-col gap-[22px]"
+    >
       <input type="hidden" name="code" value={code} />
       <div className="mt-[22px] flex flex-col gap-3.5">
         <div className="flex flex-col gap-1.5">
@@ -97,7 +91,7 @@ export function JoinForm({
       <div className="flex-1" />
 
       {error && (
-        <p role="alert" className="rounded-xl bg-gold px-3 py-2.5 text-[13px] text-ink">
+        <p role="alert" className={alertBox}>
           {error}
         </p>
       )}

@@ -196,7 +196,8 @@ select is((select r.name from assignments a join tests.mem g on g.id = a.giver_i
           'the leaver''s Santa now gifts the leaver''s receiver');
 select is((select unwrapped_at from members where user_id = tests.uid('tunde')), null,
           'and their Santa unwraps again');
-select is((select count(*)::int from assignments), 4, '4 assignments remain for 4 members');
+select is((select count(*)::int from assignments where group_id = '00000000-0000-0000-0000-00000000000a'), 4,
+          '4 assignments remain for 4 members');
 select is((select count(*)::int from assignments a join t_before b
            on b.giver = (select name from tests.mem where id = a.giver_id)
           and b.receiver = (select name from tests.mem where id = a.receiver_id)), 3,

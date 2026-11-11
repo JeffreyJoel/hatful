@@ -2,10 +2,11 @@ import Link from "next/link";
 import { getGroup } from "@/lib/group";
 import { createClient } from "@/lib/supabase/server";
 import { formatMoney, formatSwapDate } from "@/lib/format";
-import { primaryOnSnow } from "@/lib/ui";
+import { primaryOnSnow, textLinkOnSnow } from "@/lib/ui";
 import { LobbyLive, type LobbyMember } from "@/components/lobby-live";
 import { InviteLink } from "@/components/invite-link";
-import { NoEntryIcon } from "@/components/icons";
+import { HouseRules } from "@/components/house-rules";
+import { DrawNames } from "@/components/draw-names";
 
 export default async function LobbyPage({ params }: PageProps<"/g/[id]">) {
   const { id } = await params;
@@ -29,7 +30,6 @@ export default async function LobbyPage({ params }: PageProps<"/g/[id]">) {
     isOwner: m.user_id === group.owner_id,
     isMe: m.id === me.id,
   }));
-  const nameOf = new Map(list.map((m) => [m.id, m.name]));
   const owner = list.find((m) => m.isOwner)?.name ?? "The organiser";
   const drawn = group.status === "drawn";
 
@@ -59,18 +59,12 @@ export default async function LobbyPage({ params }: PageProps<"/g/[id]">) {
             drawnAt={drawn ? group.drawn_at : null}
           />
 
-          {(rules ?? []).map((r) => (
-            <div
-              key={`${r.member_a}-${r.member_b}`}
-              className="flex items-center gap-2.5 rounded-2xl border-[1.5px] border-dashed border-[#9DB5AA] px-3.5 py-3"
-            >
-              <NoEntryIcon className="shrink-0 text-ink" />
-              <span className="text-[13px] leading-[1.4]">
-                House rule: {nameOf.get(r.member_a)} and {nameOf.get(r.member_b)} can&apos;t draw
-                each other.
-              </span>
-            </div>
-          ))}
+          <HouseRules
+            groupId={id}
+            rules={(rules ?? []).map((r) => ({ a: r.member_a, b: r.member_b }))}
+            people={list.map((m) => ({ id: m.id, name: m.name }))}
+            editable={isOwner && !drawn}
+          />
 
           <div className="flex-1" />
 
@@ -82,8 +76,18 @@ export default async function LobbyPage({ params }: PageProps<"/g/[id]">) {
               {me.unwrapped_at ? "See my match" : "Unwrap my match"}
             </Link>
           ) : (
-            <InviteLink code={group.join_code} groupName={group.name} />
+            <>
+              <InviteLink
+                code={group.join_code}
+                groupName={group.name}
+                secondary={isOwner && list.length >= 3}
+              />
+              {isOwner && <DrawNames groupId={id} count={list.length} />}
+            </>
           )}
+          <Link href={`/g/${id}/wishlist`} className={textLinkOnSnow}>
+            Edit my wishlist
+          </Link>
         </div>
       </div>
     </main>

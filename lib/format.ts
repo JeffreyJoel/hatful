@@ -18,3 +18,12 @@ export function formatSwapDate(date: string) {
     .format(new Date(`${date}T00:00:00Z`))
     .replace(",", "");
 }
+
+// Accepts "30", "$30", "29.50". Empty means no amount; anything else is "bad".
+export function parseMoney(raw: string): number | null | "bad" {
+  const cleaned = raw.replace(/[$,\s]/g, "");
+  if (!cleaned) return null;
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return "bad";
+  const cents = Math.round(Number(cleaned) * 100);
+  return cents > 0 && cents <= 100_000_00 ? cents : "bad";
+}

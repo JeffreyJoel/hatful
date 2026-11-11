@@ -15,7 +15,8 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
-    "sonner": "^2.0.8"
+    "sonner": "^2.0.8",
+    "vaul": "^1.1.2"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",

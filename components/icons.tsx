@@ -76,3 +76,22 @@ export function InfoIcon({ size = 16, ...props }: Props) {
     </Stroke>
   );
 }
+
+// "Gift bought" (Match).
+export function CheckIcon(props: Props) {
+  return (
+    <Stroke {...props}>
+      <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </Stroke>
+  );
+}
+
+// Remove a wish or a house rule.
+export function CloseIcon({ size = 16, ...props }: Props) {
+  return (
+    <Stroke size={size} {...props}>
+      <path d="M6 6l12 12" />
+      <path d="M18 6L6 18" />
+    </Stroke>
+  );
+}

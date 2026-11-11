@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { parseMoney } from "@/lib/format";
 
 export type NewGroup = {
   groupName: string;
@@ -16,20 +17,11 @@ function joinCode() {
   return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join("");
 }
 
-// Accepts "30", "$30", "29.50". Empty means no limit.
-function parseBudget(raw: string): number | null | "bad" {
-  const cleaned = raw.replace(/[$,\s]/g, "");
-  if (!cleaned) return null;
-  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return "bad";
-  const cents = Math.round(Number(cleaned) * 100);
-  return cents > 0 && cents <= 100_000_00 ? cents : "bad";
-}
-
 // Validates the form fields; returns the group or a message for the person.
 export function parseNewGroup(get: (key: string) => string | null): NewGroup | string {
   const groupName = (get("group") ?? "").trim();
   const name = (get("name") ?? "").trim();
-  const budget = parseBudget(get("budget") ?? "");
+  const budget = parseMoney(get("budget") ?? "");
   const swapDate = (get("date") ?? "").trim() || null;
 
   if (!groupName) return "Give the group a name.";

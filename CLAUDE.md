@@ -49,7 +49,14 @@ app/
                            addWish, removeWish, toggleClaim
 components/                lobby-live.tsx, unwrap.tsx, wish-drawer.tsx, gift-tag.tsx
 lib/supabase/              server.ts, client.ts, middleware.ts  (@supabase/ssr)
+proxy.ts                   Next 16's name for middleware.ts; calls lib/supabase/middleware.ts
 ```
+
+Next 16 runs with `cacheComponents`: anything reading cookies, `params` or `searchParams`
+must sit inside `<Suspense>` or the build fails. Read `node_modules/next/dist/docs/` first.
+
+Magic links use `token_hash` (see `supabase/templates/magic_link.html`) so they open on any
+device. The hosted project needs the same template for both Magic Link and Confirm signup.
 
 Env: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_SITE_URL`.
 

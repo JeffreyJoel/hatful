@@ -4,7 +4,7 @@ begin;
 select no_plan();
 
 create schema tests;
-grant usage on schema tests to authenticated;
+grant usage on schema tests to authenticated, anon;
 
 -- People are referred to by name: amara (organiser), tunde, priya, leo, sofia, and
 -- outsider, who is signed in but not in the group.
@@ -35,7 +35,7 @@ begin
   perform set_config('request.jwt.claims', '', true);
 end $$;
 
-grant execute on all functions in schema tests to authenticated;
+grant execute on all functions in schema tests to authenticated, anon;
 
 insert into groups (id, name, owner_id, join_code)
 values ('00000000-0000-0000-0000-00000000000a', 'Sunday Dinner Club', tests.uid('amara'), 'JOINME');
@@ -59,6 +59,14 @@ select throws_ok($$ select * from reveal_my_match('00000000-0000-0000-0000-00000
 select tests.logout();
 select is((select unwrapped_at from members m join tests.mem t using (id) where t.name = 'tunde'), null,
           'reveal before the draw does not mark the member as unwrapped');
+
+select set_config('role', 'anon', true);
+select results_eq($$ select name, organiser, member_count, is_open from group_invite('JOINME') $$,
+                  $$ values ('Sunday Dinner Club', 'Amara', 5, true) $$,
+                  'a signed-out visitor with the code sees the invite card');
+select is_empty($$ select * from group_invite('WRONG') $$, 'a wrong code shows nothing');
+select is_empty($$ select * from groups $$, 'but they still cannot read groups');
+select tests.logout();
 
 select tests.login('outsider');
 select is((select count(*)::int from groups), 0, 'an outsider cannot read the group');
@@ -100,6 +108,7 @@ select is((select count(*)::int from assignments), 0, 'an outsider sees no assig
 select tests.login('outsider');
 select throws_ok($$ select join_group('JOINME', 'Late') $$, 'This invite is closed or does not exist',
                  'joining after the draw is refused');
+select is((select is_open from group_invite('JOINME')), false, 'the invite card shows it is closed');
 select throws_ok($$ select draw_names('00000000-0000-0000-0000-00000000000a') $$,
                  'Not allowed, or names are already drawn', 'an outsider cannot draw');
 select throws_ok($$ select * from reveal_my_match('00000000-0000-0000-0000-00000000000a') $$,

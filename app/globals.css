@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  --spruce: #0E3A2D;  --spruce-deep: #0A2B21;  --spruce-line: #3C7361;
+  --snow: #F4F7F5;    --card: #FFFFFF;         --card-line: #DCE6E1;
+  --ink: #10231C;     --ink-soft: #40564D;     --on-spruce-soft: #C4DACF;
+  --berry: #D62F3A;   --berry-text: #C22630;   --gold: #F4B83A;
+
+  --ease-out:    cubic-bezier(.22, 1, .36, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-drawer: cubic-bezier(.32, .72, 0, 1);
+  --ease-burst:  cubic-bezier(.16, 1, .3, 1);
+}
+
+@theme inline {
+  --color-spruce: var(--spruce);
+  --color-spruce-deep: var(--spruce-deep);
+  --color-spruce-line: var(--spruce-line);
+  --color-snow: var(--snow);
+  --color-card: var(--card);
+  --color-card-line: var(--card-line);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-on-spruce-soft: var(--on-spruce-soft);
+  --color-berry: var(--berry);
+  --color-berry-text: var(--berry-text);
+  --color-gold: var(--gold);
+
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+
+  --ease-out: var(--ease-out);
+  --ease-spring: var(--ease-spring);
+}
+
+body {
+  background: var(--snow);
+  color: var(--ink);
+}
+
+/* The red-and-white ribbon across the top of every screen. */
+.candy-stripe {
+  height: 12px;
+  flex-shrink: 0;
+  background: repeating-linear-gradient(135deg, var(--berry) 0 14px, #fff 14px 28px);
+}
+
+.press {
+  transition: transform 160ms ease-out;
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
+}

@@ -1,0 +1,10 @@
+## Plain-text part of the send.otp email; see sign-in-code.html. Lines starting "##" are stripped.
+Hatful
+
+Here's your code to get into the hat:
+
+{{code}}
+
+It expires in {{expires_in}}.
+
+Didn't ask for this? You can ignore it.

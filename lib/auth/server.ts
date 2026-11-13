@@ -20,10 +20,11 @@ export async function currentUserId(): Promise<string | null> {
   return (await getSession())?.user?.id ?? null;
 }
 
-// @neon/auth 0.8.2 proxies sign-in/magic-link on the server but leaves it out of the
-// type; same shape as Better Auth's client call.
-type MagicLink = (body: { email: string; name?: string; callbackURL?: string }) => Promise<{
+
+// @neon/auth 0.8.2 proxies email-otp/send-verification-otp on the server but types
+// `emailOtp` as unknown; same shape as Better Auth's client call.
+type SendCode = (body: { email: string; type: "sign-in" }) => Promise<{
   error: { status?: number; message?: string } | null;
 }>;
-export const sendMagicLink: MagicLink = (body) =>
-  (auth.signIn as unknown as { magicLink: MagicLink }).magicLink(body);
+export const sendSignInCode: SendCode = (body) =>
+  (auth as unknown as { emailOtp: { sendVerificationOtp: SendCode } }).emailOtp.sendVerificationOtp(body);

@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useState } from "react";
-import { requestMagicLink, type FormState } from "@/app/actions";
+import { requestJoin, type FormState } from "@/app/actions";
 import { CheckEmail } from "@/components/check-email";
 import { alertBox, fieldOnSpruce as field, labelOnSpruce as label, primaryOnSpruce as primary } from "@/lib/ui";
 
@@ -9,34 +9,31 @@ export function JoinForm({
   code,
   organiser,
   signedInEmail,
-  linkExpired,
 }: {
   code: string;
   organiser: string;
   signedInEmail: string | null;
-  linkExpired: boolean;
 }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(requestMagicLink, {
+  const [state, action, pending] = useActionState<FormState, FormData>(requestJoin, {
     status: "idle",
   });
   const [retrying, setRetrying] = useState(false);
+  // Resubmitted once the emailed code signs them in.
+  const [submitted, setSubmitted] = useState<FormData | null>(null);
 
   if (state.status === "sent" && !retrying) {
     return (
       <CheckEmail
         email={state.email}
+        name={String(submitted?.get("name") ?? "")}
         outcome="your name goes in the hat"
+        onSignedIn={() => submitted && startTransition(() => action(submitted))}
         onRetry={() => setRetrying(true)}
       />
     );
   }
 
-  const error =
-    state.status === "error"
-      ? state.message
-      : linkExpired && state.status === "idle"
-        ? "That sign-in link has expired or was already used. Send yourself a new one."
-        : null;
+  const error = state.status === "error" ? state.message : null;
 
   return (
     <form
@@ -45,6 +42,7 @@ export function JoinForm({
         // Submitting here rather than via `action` stops React clearing the fields on an error.
         e.preventDefault();
         const data = new FormData(e.currentTarget);
+        setSubmitted(data);
         setRetrying(false);
         startTransition(() => action(data));
       }}
@@ -96,10 +94,10 @@ export function JoinForm({
         </p>
       )}
       <button type="submit" disabled={pending} className={primary}>
-        {pending ? (signedInEmail === null ? "Sending your link…" : "Joining…") : "Join the draw"}
+        {pending ? (signedInEmail === null ? "Sending your code…" : "Joining…") : "Join the draw"}
       </button>
       <p className="text-center text-[13px] leading-[1.45] text-on-spruce-soft">
-        {signedInEmail === null ? "We'll email you a sign-in link. " : ""}
+        {signedInEmail === null ? "We'll email you a sign-in code. " : ""}
         Your match is visible only to you, not even to {organiser}.
       </p>
     </form>

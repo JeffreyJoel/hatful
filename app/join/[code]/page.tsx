@@ -7,7 +7,7 @@ import { TagString } from "@/components/icons";
 import { Wordmark } from "@/components/wordmark";
 import { JoinForm } from "./join-form";
 
-export default function JoinPage({ params, searchParams }: PageProps<"/join/[code]">) {
+export default function JoinPage({ params }: PageProps<"/join/[code]">) {
   return (
     <main className="min-h-dvh bg-spruce text-white">
       <div className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col">
@@ -15,7 +15,7 @@ export default function JoinPage({ params, searchParams }: PageProps<"/join/[cod
         <div className="flex flex-1 flex-col gap-[22px] px-6 pt-6 pb-7">
           <Wordmark />
           <Suspense fallback={<div className="h-[290px]" />}>
-            <Invite params={params} searchParams={searchParams} />
+            <Invite params={params} />
           </Suspense>
         </div>
       </div>
@@ -33,12 +33,8 @@ type InviteCard = {
   is_open: boolean;
 };
 
-async function Invite({
-  params,
-  searchParams,
-}: Pick<PageProps<"/join/[code]">, "params" | "searchParams">) {
+async function Invite({ params }: Pick<PageProps<"/join/[code]">, "params">) {
   const { code } = await params;
-  const { error: linkError } = await searchParams;
   const session = await getSession();
   const userId = session?.user?.id ?? null;
 
@@ -103,7 +99,6 @@ async function Invite({
           code={code}
           organiser={organiser}
           signedInEmail={session?.user ? session.user.email : null}
-          linkExpired={linkError === "link"}
         />
       ) : (
         <p className="mt-[22px] text-[15px] leading-[1.45] text-on-spruce-soft">

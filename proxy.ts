@@ -1,10 +1,10 @@
 import { auth } from "@/lib/auth/server";
 
-// Next 16's name for middleware. Refreshes the session, finishes the magic-link
-// hand-off, and sends signed-out visitors to the landing page; only /g/* is private.
+// Next 16's name for middleware. Refreshes the session and sends signed-out visitors
+// to the landing page; only /g/* is private.
 export default auth.middleware({
   loginUrl: "/",
-  publicRoutes: ["/", "/new", "/join", "/auth/confirm"],
+  publicRoutes: ["/", "/new", "/join"],
 });
 
 export const config = {

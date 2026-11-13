@@ -34,14 +34,6 @@ export function parseNewGroup(get: (key: string) => string | null): NewGroup | s
   return { groupName, name, budgetCents: budget, swapDate };
 }
 
-// The same fields as URL params, for the magic link to carry them through sign-in.
-export function newGroupParams(g: NewGroup) {
-  const p = new URLSearchParams({ group: g.groupName, name: g.name });
-  if (g.budgetCents != null) p.set("budget", (g.budgetCents / 100).toString());
-  if (g.swapDate) p.set("date", g.swapDate);
-  return p;
-}
-
 // Creates the group as the signed-in user and puts them in it as the organiser.
 // Run inside asUser(ownerId, ...) so RLS checks owner_id and join_group sees the caller.
 export async function createGroupAs(db: Db, ownerId: string, g: NewGroup) {

@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth/server";
 import { Wordmark } from "@/components/wordmark";
 import { NewGroupForm } from "./new-group-form";
 
-export default function NewGroupPage({ searchParams }: PageProps<"/new">) {
+export default function NewGroupPage() {
   return (
     <main className="min-h-dvh bg-spruce text-white">
       <div className="mx-auto flex min-h-dvh w-full max-w-[390px] flex-col">
@@ -23,7 +23,7 @@ export default function NewGroupPage({ searchParams }: PageProps<"/new">) {
             Start a group
           </h1>
           <Suspense fallback={<div className="flex-1" />}>
-            <Form searchParams={searchParams} />
+            <Form />
           </Suspense>
         </div>
       </div>
@@ -31,16 +31,7 @@ export default function NewGroupPage({ searchParams }: PageProps<"/new">) {
   );
 }
 
-async function Form({ searchParams }: Pick<PageProps<"/new">, "searchParams">) {
-  const { error } = await searchParams;
+async function Form() {
   const session = await getSession();
-
-  const notice =
-    error === "link"
-      ? "That sign-in link has expired or was already used. Send yourself a new one."
-      : error === "create"
-        ? "You're signed in, but we couldn't create the group. Try again."
-        : null;
-
-  return <NewGroupForm signedInEmail={session?.user ? session.user.email : null} notice={notice} />;
+  return <NewGroupForm signedInEmail={session?.user ? session.user.email : null} />;
 }

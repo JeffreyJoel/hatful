@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { asUser, pgCode, pgMessage, type Db } from "@/lib/db";
-import { currentUserId, sendMagicLink } from "@/lib/auth/server";
-import { createGroupAs, newGroupParams, parseNewGroup } from "@/lib/create-group";
+import { currentUserId, sendSignInCode } from "@/lib/auth/server";
+import { createGroupAs, parseNewGroup } from "@/lib/create-group";
 import { parseMoney } from "@/lib/format";
 
 export type FormState =
@@ -14,27 +14,25 @@ export type FormState =
 const NAME_MAX = 40;
 const EMAIL = /^\S+@\S+\.\S+$/;
 
-// Emails a sign-in link that lands on /auth/confirm with `params` attached.
-// `name` names the Neon Auth account if this email is new.
-async function sendLink(email: string, name: string, params: URLSearchParams): Promise<FormState> {
+// Emails a 6-digit sign-in code. The form then signs in with it (lib/auth/client.ts)
+// and resubmits itself, which lands in the signed-in branch of the action.
+async function sendCode(email: string): Promise<FormState> {
   if (!EMAIL.test(email)) return { status: "error", message: "That email doesn't look right." };
 
-  const confirm = new URL("/auth/confirm", process.env.NEXT_PUBLIC_SITE_URL);
-  confirm.search = params.toString();
-
-  const { error } = await sendMagicLink({ email, name, callbackURL: confirm.toString() });
+  const { error } = await sendSignInCode({ email, type: "sign-in" });
   if (!error) return { status: "sent", email };
+  console.error("Sign-in code request failed", { status: error.status, message: error.message });
   return {
     status: "error",
     message:
       error.status === 429
-        ? "Too many links sent. Wait a minute and try again."
-        : "We couldn't send your link. Try again in a moment.",
+        ? "Too many codes sent. Wait a minute and try again."
+        : "We couldn't send your code. Try again in a moment.",
   };
 }
 
-// Signed in: join straight away. Signed out: email a link that joins on arrival.
-export async function requestMagicLink(_prev: FormState, form: FormData): Promise<FormState> {
+// Signed in: join straight away. Signed out: email a sign-in code.
+export async function requestJoin(_prev: FormState, form: FormData): Promise<FormState> {
   const code = String(form.get("code") ?? "");
   const name = String(form.get("name") ?? "").trim();
   const email = String(form.get("email") ?? "").trim();
@@ -58,10 +56,10 @@ export async function requestMagicLink(_prev: FormState, form: FormData): Promis
     redirect(`/g/${groupId}`);
   }
 
-  return sendLink(email, name, new URLSearchParams({ join: code, name }));
+  return sendCode(email);
 }
 
-// Signed in: create now. Signed out: the magic link carries the fields and creates on arrival.
+// Signed in: create now. Signed out: email a sign-in code.
 export async function createGroup(_prev: FormState, form: FormData): Promise<FormState> {
   const parsed = parseNewGroup((key) => form.get(key) as string | null);
   if (typeof parsed === "string") return { status: "error", message: parsed };
@@ -77,9 +75,7 @@ export async function createGroup(_prev: FormState, form: FormData): Promise<For
     redirect(`/g/${groupId}`);
   }
 
-  const params = newGroupParams(parsed);
-  params.set("create", "1");
-  return sendLink(String(form.get("email") ?? "").trim(), parsed.name, params);
+  return sendCode(String(form.get("email") ?? "").trim());
 }
 
 export type Result = { ok: true } | { ok: false; message: string };

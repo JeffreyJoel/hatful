@@ -8,15 +8,15 @@ import { formatMoney, formatSwapDate, inviteTitle, parseMoney } from "@/lib/form
 
 export function NewGroupForm({
   signedInEmail,
-  notice,
 }: {
   signedInEmail: string | null;
-  notice: string | null;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(createGroup, {
     status: "idle",
   });
   const [retrying, setRetrying] = useState(false);
+  // Resubmitted once the emailed code signs them in.
+  const [submitted, setSubmitted] = useState<FormData | null>(null);
   // Drive the preview card; the form still submits these fields by name.
   const [group, setGroup] = useState("");
   const [budget, setBudget] = useState("");
@@ -26,13 +26,15 @@ export function NewGroupForm({
     return (
       <CheckEmail
         email={state.email}
+        name={String(submitted?.get("name") ?? "")}
         outcome="your group is ready to share"
+        onSignedIn={() => submitted && startTransition(() => action(submitted))}
         onRetry={() => setRetrying(true)}
       />
     );
   }
 
-  const error = state.status === "error" ? state.message : state.status === "idle" ? notice : null;
+  const error = state.status === "error" ? state.message : null;
 
   return (
     <form
@@ -41,6 +43,7 @@ export function NewGroupForm({
         // Submitting here rather than via `action` stops React clearing the fields on an error.
         e.preventDefault();
         const data = new FormData(e.currentTarget);
+        setSubmitted(data);
         setRetrying(false);
         startTransition(() => action(data));
       }}
@@ -139,7 +142,7 @@ export function NewGroupForm({
         </p>
       )}
       <button type="submit" disabled={pending} className={primaryOnSpruce}>
-        {pending ? (signedInEmail === null ? "Sending your link…" : "Creating…") : "Create group"}
+        {pending ? (signedInEmail === null ? "Sending your code…" : "Creating…") : "Create group"}
       </button>
       <p className="text-center text-[13px] leading-[1.45] text-on-spruce-soft">
         You&apos;ll run the draw. Your own match stays hidden from you too, until you unwrap it.

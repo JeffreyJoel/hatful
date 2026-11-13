@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getGroup } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { asUser } from "@/lib/db";
+import { currentUserId } from "@/lib/auth/server";
 import { formatMoney, formatSwapDate } from "@/lib/format";
 import { textLinkOnSnow } from "@/lib/ui";
 import { GiftTag } from "@/components/gift-tag";
@@ -16,25 +17,32 @@ export default async function MatchPage({ params }: PageProps<"/g/[id]/match">) 
   // Nobody skips the unwrap by typing the URL.
   if (!me.unwrapped_at) redirect(`/g/${id}/draw`);
 
-  const supabase = await createClient();
-  // RLS returns only the caller's own assignment row.
-  const { data: mine } = await supabase
-    .from("assignments")
-    .select("receiver_id, bought_at")
-    .eq("group_id", id)
-    .eq("giver_id", me.id)
-    .maybeSingle();
-  if (!mine) redirect(`/g/${id}`);
-
-  const [{ data: receiver }, { data: wishes }, { data: claims }] = await Promise.all([
-    supabase.from("members").select("display_name, note").eq("id", mine.receiver_id).maybeSingle(),
-    supabase
-      .from("wishes")
-      .select("id, title, url, price_cents, note")
-      .eq("member_id", mine.receiver_id)
-      .order("created_at"),
-    supabase.from("wish_claims").select("wish_id").eq("giver_id", me.id),
-  ]);
+  const userId = await currentUserId();
+  const data = await asUser(userId, async (db) => {
+    // RLS returns only the caller's own assignment row.
+    const { rows: [mine] } = await db.query<{ receiver_id: string; bought_at: string | null }>(
+      "select receiver_id, bought_at from assignments where group_id = $1 and giver_id = $2",
+      [id, me.id],
+    );
+    if (!mine) return null;
+    const receiver = await db.query<{ display_name: string; note: string | null }>(
+      "select display_name, note from members where id = $1",
+      [mine.receiver_id],
+    );
+    const wishes = await db.query<{
+      id: string; title: string; url: string | null; price_cents: number | null; note: string | null;
+    }>(
+      "select id, title, url, price_cents, note from wishes where member_id = $1 order by created_at",
+      [mine.receiver_id],
+    );
+    const claims = await db.query<{ wish_id: string }>(
+      "select wish_id from wish_claims where giver_id = $1",
+      [me.id],
+    );
+    return { mine, receiver: receiver.rows[0], wishes: wishes.rows, claims: claims.rows };
+  });
+  if (!data) redirect(`/g/${id}`);
+  const { mine, receiver, wishes, claims } = data;
   if (!receiver) redirect(`/g/${id}`);
 
   const name = receiver.display_name;

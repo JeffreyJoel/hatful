@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getSession } from "@/lib/auth/server";
 import { Wordmark } from "@/components/wordmark";
 import { NewGroupForm } from "./new-group-form";
 
@@ -33,8 +33,7 @@ export default function NewGroupPage({ searchParams }: PageProps<"/new">) {
 
 async function Form({ searchParams }: Pick<PageProps<"/new">, "searchParams">) {
   const { error } = await searchParams;
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
+  const session = await getSession();
 
   const notice =
     error === "link"
@@ -43,5 +42,5 @@ async function Form({ searchParams }: Pick<PageProps<"/new">, "searchParams">) {
         ? "You're signed in, but we couldn't create the group. Try again."
         : null;
 
-  return <NewGroupForm signedInEmail={data?.claims ? (data.claims.email ?? "") : null} notice={notice} />;
+  return <NewGroupForm signedInEmail={session?.user ? session.user.email : null} notice={notice} />;
 }

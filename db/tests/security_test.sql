@@ -1,6 +1,7 @@
 -- RLS and the SQL functions, run as signed-in users. Covers who can read an
 -- assignment, who can write one, reveal, wishes and claims, joining late, and removal.
 begin;
+create extension if not exists pgtap;
 select no_plan();
 
 create schema tests;
@@ -13,8 +14,8 @@ grant select on tests.people to authenticated;
 
 insert into tests.people
 select n, gen_random_uuid() from unnest(array['amara','tunde','priya','leo','sofia','outsider']) n;
-insert into auth.users (id, email, aud, role)
-select uid, name || '@test.local', 'authenticated', 'authenticated' from tests.people;
+insert into neon_auth."user" (id, name, email, "emailVerified")
+select uid, name, name || '@test.local', true from tests.people;
 
 create function tests.uid(who text) returns uuid
 language sql stable as $$ select uid from tests.people where name = who $$;
@@ -65,7 +66,7 @@ select results_eq($$ select name, organiser, member_count, is_open from group_in
                   $$ values ('Sunday Dinner Club', 'Amara', 5, true) $$,
                   'a signed-out visitor with the code sees the invite card');
 select is_empty($$ select * from group_invite('WRONG') $$, 'a wrong code shows nothing');
-select is_empty($$ select * from groups $$, 'but they still cannot read groups');
+select throws_ok($$ select * from groups $$, '42501', NULL, 'but they still cannot read groups');
 select tests.logout();
 
 select tests.login('outsider');

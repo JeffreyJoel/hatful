@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { asUser, pgCode, pgMessage, type Db } from "@/lib/db";
+import { currentUserId, sendMagicLink } from "@/lib/auth/server";
 import { createGroupAs, newGroupParams, parseNewGroup } from "@/lib/create-group";
 import { parseMoney } from "@/lib/format";
 
@@ -14,18 +15,14 @@ const NAME_MAX = 40;
 const EMAIL = /^\S+@\S+\.\S+$/;
 
 // Emails a sign-in link that lands on /auth/confirm with `params` attached.
-async function sendLink(email: string, params: URLSearchParams): Promise<FormState> {
+// `name` names the Neon Auth account if this email is new.
+async function sendLink(email: string, name: string, params: URLSearchParams): Promise<FormState> {
   if (!EMAIL.test(email)) return { status: "error", message: "That email doesn't look right." };
 
   const confirm = new URL("/auth/confirm", process.env.NEXT_PUBLIC_SITE_URL);
-  // %20 not "+": the email template HTML-escapes "+", and a mangled link drops the token.
-  confirm.search = params.toString().replace(/\+/g, "%20");
+  confirm.search = params.toString();
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: confirm.toString(), shouldCreateUser: true },
-  });
+  const { error } = await sendMagicLink({ email, name, callbackURL: confirm.toString() });
   if (!error) return { status: "sent", email };
   return {
     status: "error",
@@ -34,12 +31,6 @@ async function sendLink(email: string, params: URLSearchParams): Promise<FormSta
         ? "Too many links sent. Wait a minute and try again."
         : "We couldn't send your link. Try again in a moment.",
   };
-}
-
-async function signedInUserId() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  return { supabase, userId: data?.claims.sub ?? null };
 }
 
 // Signed in: join straight away. Signed out: email a link that joins on arrival.
@@ -53,14 +44,21 @@ export async function requestMagicLink(_prev: FormState, form: FormData): Promis
     return { status: "error", message: `Keep your name under ${NAME_MAX} characters.` };
   }
 
-  const { supabase, userId } = await signedInUserId();
+  const userId = await currentUserId();
   if (userId) {
-    const { data: groupId, error } = await supabase.rpc("join_group", { p_code: code, p_name: name });
-    if (error) return { status: "error", message: error.message };
+    let groupId: string;
+    try {
+      groupId = await asUser(userId, async (db) => {
+        const { rows } = await db.query<{ g: string }>("select join_group($1, $2) as g", [code, name]);
+        return rows[0].g;
+      });
+    } catch (error) {
+      return { status: "error", message: pgMessage(error) || "We couldn't add you. Try again." };
+    }
     redirect(`/g/${groupId}`);
   }
 
-  return sendLink(email, new URLSearchParams({ join: code, name }));
+  return sendLink(email, name, new URLSearchParams({ join: code, name }));
 }
 
 // Signed in: create now. Signed out: the magic link carries the fields and creates on arrival.
@@ -68,11 +66,11 @@ export async function createGroup(_prev: FormState, form: FormData): Promise<For
   const parsed = parseNewGroup((key) => form.get(key) as string | null);
   if (typeof parsed === "string") return { status: "error", message: parsed };
 
-  const { supabase, userId } = await signedInUserId();
+  const userId = await currentUserId();
   if (userId) {
     let groupId: string;
     try {
-      groupId = await createGroupAs(supabase, userId, parsed);
+      groupId = await asUser(userId, (db) => createGroupAs(db, userId, parsed));
     } catch {
       return { status: "error", message: "We couldn't create the group. Try again." };
     }
@@ -81,70 +79,89 @@ export async function createGroup(_prev: FormState, form: FormData): Promise<For
 
   const params = newGroupParams(parsed);
   params.set("create", "1");
-  return sendLink(String(form.get("email") ?? "").trim(), params);
+  return sendLink(String(form.get("email") ?? "").trim(), parsed.name, params);
 }
 
 export type Result = { ok: true } | { ok: false; message: string };
 
 const FAILED: Result = { ok: false, message: "We couldn't save that. Try again." };
 
-// The caller's own member row in a group, or null when they are not in it.
-async function myMember(groupId: string) {
-  const { supabase, userId } = await signedInUserId();
-  if (!userId) return null;
-  const { data } = await supabase
-    .from("members")
-    .select("id")
-    .eq("group_id", groupId)
-    .eq("user_id", userId)
-    .maybeSingle();
-  return data ? { supabase, memberId: data.id as string } : null;
+// Runs `run` as the signed-in user, or returns FAILED when nobody is signed in.
+async function signedIn(run: (db: Db, userId: string) => Promise<Result>): Promise<Result> {
+  const userId = await currentUserId();
+  if (!userId) return FAILED;
+  return asUser(userId, (db) => run(db, userId)).catch(() => FAILED);
+}
+
+// The caller's own member id in a group, or null when they are not in it.
+async function myMemberId(db: Db, groupId: string, userId: string) {
+  const { rows } = await db.query<{ id: string }>(
+    "select id from members where group_id = $1 and user_id = $2",
+    [groupId, userId],
+  );
+  return rows[0]?.id ?? null;
 }
 
 // The organiser's one-time draw. draw_names does every check itself.
 export async function drawNames(groupId: string): Promise<Result> {
-  const { supabase } = await signedInUserId();
-  const { error } = await supabase.rpc("draw_names", { g: groupId });
-  if (!error) return { ok: true };
-  if (/house rules/i.test(error.message)) {
-    return { ok: false, message: "These house rules make a draw impossible. Remove one and try again." };
+  const userId = await currentUserId();
+  try {
+    await asUser(userId, (db) => db.query("select draw_names($1)", [groupId]));
+    return { ok: true };
+  } catch (error) {
+    const message = pgMessage(error);
+    if (/house rules/i.test(message)) {
+      return { ok: false, message: "These house rules make a draw impossible. Remove one and try again." };
+    }
+    if (/at least 3/i.test(message)) return { ok: false, message };
+    return { ok: false, message: "We couldn't draw names. Refresh the page and try again." };
   }
-  if (/at least 3/i.test(error.message)) return { ok: false, message: error.message };
-  return { ok: false, message: "We couldn't draw names. Refresh the page and try again." };
 }
 
 // Called only when the hold completes (rule 4). Returns just the name to show.
 export async function revealMatch(
   groupId: string,
 ): Promise<{ ok: true; name: string } | { ok: false; message: string }> {
-  const { supabase } = await signedInUserId();
-  const { data, error } = await supabase
-    .rpc("reveal_my_match", { g: groupId })
-    .maybeSingle<{ receiver_name: string }>();
-  if (error || !data) {
-    return { ok: false, message: "We couldn't unwrap your match. Try again in a moment." };
+  const failed = { ok: false, message: "We couldn't unwrap your match. Try again in a moment." } as const;
+  const userId = await currentUserId();
+  if (!userId) return failed;
+  try {
+    const { rows } = await asUser(userId, (db) =>
+      db.query<{ receiver_name: string }>("select receiver_name from reveal_my_match($1)", [groupId]),
+    );
+    return rows[0] ? { ok: true, name: rows[0].receiver_name } : failed;
+  } catch {
+    return failed;
   }
-  return { ok: true, name: data.receiver_name };
 }
 
 // House rules store each pair once, smaller id first.
 function pair(groupId: string, a: string, b: string) {
-  const [member_a, member_b] = a.toLowerCase() < b.toLowerCase() ? [a, b] : [b, a];
-  return { group_id: groupId, member_a, member_b };
+  return a.toLowerCase() < b.toLowerCase() ? [groupId, a, b] : [groupId, b, a];
 }
 
 export async function addRule(groupId: string, a: string, b: string): Promise<Result> {
   if (a === b) return { ok: false, message: "Pick two different people." };
-  const { supabase } = await signedInUserId();
-  const { error } = await supabase.from("exclusions").insert(pair(groupId, a, b));
-  if (!error) return { ok: true };
-  return error.code === "23505" ? { ok: false, message: "That rule is already on the list." } : FAILED;
+  const userId = await currentUserId();
+  if (!userId) return FAILED;
+  try {
+    await asUser(userId, (db) =>
+      db.query("insert into exclusions (group_id, member_a, member_b) values ($1, $2, $3)", pair(groupId, a, b)),
+    );
+    return { ok: true };
+  } catch (error) {
+    return pgCode(error) === "23505" ? { ok: false, message: "That rule is already on the list." } : FAILED;
+  }
 }
 
 export async function removeRule(groupId: string, a: string, b: string): Promise<Result> {
-  const { supabase } = await signedInUserId();
-  const { error } = await supabase.from("exclusions").delete().match(pair(groupId, a, b));
-  return error ? FAILED : { ok: true };
+  return signedIn(async (db) => {
+    await db.query(
+      "delete from exclusions where group_id = $1 and member_a = $2 and member_b = $3",
+      pair(groupId, a, b),
+    );
+    return { ok: true };
+  });
 }
 
 export async function addWish(
@@ -170,45 +187,57 @@ export async function addWish(
     }
   }
 
-  const mine = await myMember(groupId);
-  if (!mine) return FAILED;
-  const { error } = await mine.supabase
-    .from("wishes")
-    .insert({ member_id: mine.memberId, title, url, price_cents: price, note: note || null });
-  return error ? FAILED : { ok: true };
+  return signedIn(async (db, userId) => {
+    const memberId = await myMemberId(db, groupId, userId);
+    if (!memberId) return FAILED;
+    await db.query(
+      "insert into wishes (member_id, title, url, price_cents, note) values ($1, $2, $3, $4, $5)",
+      [memberId, title, url, price, note || null],
+    );
+    return { ok: true };
+  });
 }
 
 export async function removeWish(wishId: string): Promise<Result> {
-  const { supabase } = await signedInUserId();
-  const { error } = await supabase.from("wishes").delete().eq("id", wishId);
-  return error ? FAILED : { ok: true };
+  return signedIn(async (db) => {
+    await db.query("delete from wishes where id = $1", [wishId]);
+    return { ok: true };
+  });
 }
 
 // The note a member's Santa sees above their wishlist.
 export async function saveNote(groupId: string, note: string): Promise<Result> {
   const text = note.trim();
   if (text.length > 200) return { ok: false, message: "Keep your note under 200 characters." };
-  const mine = await myMember(groupId);
-  if (!mine) return FAILED;
-  const { error } = await mine.supabase
-    .from("members")
-    .update({ note: text || null })
-    .eq("id", mine.memberId);
-  return error ? FAILED : { ok: true };
+  return signedIn(async (db, userId) => {
+    const memberId = await myMemberId(db, groupId, userId);
+    if (!memberId) return FAILED;
+    await db.query("update members set note = $1 where id = $2", [text || null, memberId]);
+    return { ok: true };
+  });
 }
 
 // "I'm getting this". Claims are their own table so the wish's owner never sees them.
 export async function toggleClaim(groupId: string, wishId: string, claimed: boolean): Promise<Result> {
-  const mine = await myMember(groupId);
-  if (!mine) return FAILED;
-  const { error } = claimed
-    ? await mine.supabase.from("wish_claims").upsert({ wish_id: wishId, giver_id: mine.memberId })
-    : await mine.supabase.from("wish_claims").delete().eq("wish_id", wishId);
-  return error ? FAILED : { ok: true };
+  return signedIn(async (db, userId) => {
+    const memberId = await myMemberId(db, groupId, userId);
+    if (!memberId) return FAILED;
+    if (claimed) {
+      await db.query(
+        `insert into wish_claims (wish_id, giver_id) values ($1, $2)
+         on conflict (wish_id) do update set giver_id = excluded.giver_id`,
+        [wishId, memberId],
+      );
+    } else {
+      await db.query("delete from wish_claims where wish_id = $1", [wishId]);
+    }
+    return { ok: true };
+  });
 }
 
 export async function setGiftBought(groupId: string, bought: boolean): Promise<Result> {
-  const { supabase } = await signedInUserId();
-  const { error } = await supabase.rpc("set_gift_bought", { g: groupId, p_bought: bought });
-  return error ? FAILED : { ok: true };
+  return signedIn(async (db) => {
+    await db.query("select set_gift_bought($1, $2)", [groupId, bought]);
+    return { ok: true };
+  });
 }

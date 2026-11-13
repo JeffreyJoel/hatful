@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { getGroup } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { asUser } from "@/lib/db";
+import { currentUserId } from "@/lib/auth/server";
+import { sealLobby } from "@/lib/realtime";
 import { formatMoney, formatSwapDate } from "@/lib/format";
 import { primaryOnSnow, textLinkOnSnow } from "@/lib/ui";
 import { LobbyLive, type LobbyMember } from "@/components/lobby-live";
@@ -11,19 +13,24 @@ import { DrawNames } from "@/components/draw-names";
 export default async function LobbyPage({ params }: PageProps<"/g/[id]">) {
   const { id } = await params;
   const { group, me, isOwner } = await getGroup(id);
-  const supabase = await createClient();
+  // getGroup 404s anyone not signed in and in this group.
+  const userId = (await currentUserId())!;
 
-  const [{ data: members }, { data: rules }] = await Promise.all([
-    supabase
-      .from("members")
-      .select("id, user_id, display_name, unwrapped_at")
-      .eq("group_id", id)
-      .order("joined_at")
-      .order("id"),
-    supabase.from("exclusions").select("member_a, member_b").eq("group_id", id),
-  ]);
+  const { members, rules, version } = await asUser(userId, async (db) => {
+    const m = await db.query<{ id: string; user_id: string; display_name: string; unwrapped_at: string | null }>(
+      "select id, user_id, display_name, unwrapped_at from members where group_id = $1 order by joined_at, id",
+      [id],
+    );
+    const r = await db.query<{ member_a: string; member_b: string }>(
+      "select member_a, member_b from exclusions where group_id = $1",
+      [id],
+    );
+    const v = await db.query<{ v: string }>("select lobby_version($1) as v", [id]);
+    return { members: m.rows, rules: r.rows, version: v.rows[0].v };
+  });
+  const sealed = await sealLobby(userId, id);
 
-  const list: LobbyMember[] = (members ?? []).map((m) => ({
+  const list: LobbyMember[] = members.map((m) => ({
     id: m.id,
     name: m.display_name,
     unwrapped: m.unwrapped_at != null,
@@ -57,11 +64,12 @@ export default async function LobbyPage({ params }: PageProps<"/g/[id]">) {
             owner={owner}
             amOwner={isOwner}
             drawnAt={drawn ? group.drawn_at : null}
+            live={sealed && { sealed, version, userId }}
           />
 
           <HouseRules
             groupId={id}
-            rules={(rules ?? []).map((r) => ({ a: r.member_a, b: r.member_b }))}
+            rules={rules.map((r) => ({ a: r.member_a, b: r.member_b }))}
             people={list.map((m) => ({ id: m.id, name: m.name }))}
             editable={isOwner && !drawn}
           />

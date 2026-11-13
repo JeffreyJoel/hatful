@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { asUser } from "@/lib/db";
+import { getSession } from "@/lib/auth/server";
 import { formatMoney, formatSwapDate, inviteTitle } from "@/lib/format";
 import { TagString } from "@/components/icons";
 import { Wordmark } from "@/components/wordmark";
@@ -22,37 +23,38 @@ export default function JoinPage({ params, searchParams }: PageProps<"/join/[cod
   );
 }
 
+type InviteCard = {
+  name: string;
+  organiser: string | null;
+  member_count: number;
+  budget_cents: number | null;
+  currency: string;
+  swap_date: string | null;
+  is_open: boolean;
+};
+
 async function Invite({
   params,
   searchParams,
 }: Pick<PageProps<"/join/[code]">, "params" | "searchParams">) {
   const { code } = await params;
   const { error: linkError } = await searchParams;
-  const supabase = await createClient();
+  const session = await getSession();
+  const userId = session?.user?.id ?? null;
 
-  const { data: claims } = await supabase.auth.getClaims();
-  const userId = claims?.claims.sub;
-
-  // Already in this group: the invite link takes them home instead.
-  if (userId) {
-    const { data: mine } = await supabase
-      .from("members")
-      .select("group_id, groups!members_group_id_fkey!inner(join_code)")
-      .eq("user_id", userId)
-      .eq("groups.join_code", code)
-      .maybeSingle();
-    if (mine) redirect(`/g/${mine.group_id}`);
-  }
-
-  const { data: invite } = await supabase.rpc("group_invite", { p_code: code }).maybeSingle<{
-    name: string;
-    organiser: string | null;
-    member_count: number;
-    budget_cents: number | null;
-    currency: string;
-    swap_date: string | null;
-    is_open: boolean;
-  }>();
+  const { mine, invite } = await asUser(userId, async (db) => {
+    // Already in this group: the invite link takes them home instead.
+    const member = userId
+      ? await db.query<{ group_id: string }>(
+          `select m.group_id from members m join groups g on g.id = m.group_id
+            where m.user_id = $1 and g.join_code = $2`,
+          [userId, code],
+        )
+      : null;
+    const card = await db.query<InviteCard>("select * from group_invite($1)", [code]);
+    return { mine: member?.rows[0], invite: card.rows[0] };
+  });
+  if (mine) redirect(`/g/${mine.group_id}`);
 
   if (!invite) {
     return (
@@ -100,7 +102,7 @@ async function Invite({
         <JoinForm
           code={code}
           organiser={organiser}
-          signedInEmail={userId ? (claims?.claims.email ?? "") : null}
+          signedInEmail={session?.user ? session.user.email : null}
           linkExpired={linkError === "link"}
         />
       ) : (

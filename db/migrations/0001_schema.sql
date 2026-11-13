@@ -1,9 +1,9 @@
--- Hatful schema. Run in order: 0001, 0002, 0003.
+-- Hatful schema. Run in order, after 0000_neon.sql.
 
 create table groups (
   id           uuid primary key default gen_random_uuid(),
   name         text not null,
-  owner_id     uuid not null references auth.users(id),
+  owner_id     uuid not null references neon_auth."user"(id),
   join_code    text not null unique,
   budget_cents int,
   currency     text not null default 'USD',
@@ -16,7 +16,7 @@ create table groups (
 create table members (
   id           uuid primary key default gen_random_uuid(),
   group_id     uuid not null references groups(id) on delete cascade,
-  user_id      uuid not null references auth.users(id),
+  user_id      uuid not null references neon_auth."user"(id),
   display_name text not null,
   note         text,                 -- "No scented candles, please"
   unwrapped_at timestamptz,          -- set by reveal_my_match only
@@ -58,5 +58,3 @@ create table wish_claims (           -- "I'm getting this", visible to the giver
 
 create index on members (user_id);
 create index on wishes (member_id);
-
-alter publication supabase_realtime add table members;

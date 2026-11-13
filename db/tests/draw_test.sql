@@ -1,6 +1,7 @@
 -- draw_names for 3, 8 and 40 members: no self-match, everyone gives once and
 -- receives once, exclusions respected. Each size runs many times since the draw is random.
 begin;
+create extension if not exists pgtap;
 select no_plan();
 
 create schema tests;
@@ -18,8 +19,8 @@ declare
 begin
   for i in 1..n loop
     u := gen_random_uuid();
-    insert into auth.users (id, email, aud, role)
-    values (u, u || '@test.local', 'authenticated', 'authenticated');
+    insert into neon_auth."user" (id, name, email, "emailVerified")
+    values (u, u::text, u || '@test.local', true);
     uids := uids || u;
   end loop;
 

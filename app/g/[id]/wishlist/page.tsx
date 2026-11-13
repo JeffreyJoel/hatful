@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getGroup } from "@/lib/group";
-import { createClient } from "@/lib/supabase/server";
+import { asUser } from "@/lib/db";
+import { currentUserId } from "@/lib/auth/server";
 import { formatMoney } from "@/lib/format";
 import { textLinkOnSnow } from "@/lib/ui";
 import { WishlistEditor } from "@/components/wish-drawer";
@@ -8,12 +9,13 @@ import { WishlistEditor } from "@/components/wish-drawer";
 export default async function WishlistPage({ params }: PageProps<"/g/[id]/wishlist">) {
   const { id } = await params;
   const { group, me } = await getGroup(id);
-  const supabase = await createClient();
-  const { data: wishes } = await supabase
-    .from("wishes")
-    .select("id, title, url, price_cents, note")
-    .eq("member_id", me.id)
-    .order("created_at");
+  const userId = await currentUserId();
+  const { rows: wishes } = await asUser(userId, (db) =>
+    db.query<{ id: string; title: string; url: string | null; price_cents: number | null; note: string | null }>(
+      "select id, title, url, price_cents, note from wishes where member_id = $1 order by created_at",
+      [me.id],
+    ),
+  );
 
   const seenMatch = group.status === "drawn" && me.unwrapped_at != null;
 

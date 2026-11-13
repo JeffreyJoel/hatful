@@ -1,5 +1,5 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Db } from "@/lib/db";
 import { parseMoney } from "@/lib/format";
 
 export type NewGroup = {
@@ -43,22 +43,14 @@ export function newGroupParams(g: NewGroup) {
 }
 
 // Creates the group as the signed-in user and puts them in it as the organiser.
-export async function createGroupAs(supabase: SupabaseClient, ownerId: string, g: NewGroup) {
+// Run inside asUser(ownerId, ...) so RLS checks owner_id and join_group sees the caller.
+export async function createGroupAs(db: Db, ownerId: string, g: NewGroup) {
   const code = joinCode();
-  const { data: group, error } = await supabase
-    .from("groups")
-    .insert({
-      name: g.groupName,
-      owner_id: ownerId,
-      join_code: code,
-      budget_cents: g.budgetCents,
-      swap_date: g.swapDate,
-    })
-    .select("id")
-    .single();
-  if (error) throw error;
-
-  const { error: joinError } = await supabase.rpc("join_group", { p_code: code, p_name: g.name });
-  if (joinError) throw joinError;
-  return group.id as string;
+  const { rows } = await db.query<{ id: string }>(
+    `insert into groups (name, owner_id, join_code, budget_cents, swap_date)
+     values ($1, $2, $3, $4, $5) returning id`,
+    [g.groupName, ownerId, code, g.budgetCents, g.swapDate],
+  );
+  await db.query("select join_group($1, $2)", [code, g.name]);
+  return rows[0].id;
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
+import { LobbyPulse, type LobbyLiveQuery } from "@/components/lobby-pulse";
 
 export type LobbyMember = {
   id: string;
@@ -26,12 +26,14 @@ export function LobbyLive({
   owner,
   amOwner,
   drawnAt,
+  live,
 }: {
   groupId: string;
   members: LobbyMember[];
   owner: string;
   amOwner: boolean;
   drawnAt: string | null;
+  live: LobbyLiveQuery | null;
 }) {
   const router = useRouter();
   // Members on first paint don't animate; each later batch of arrivals fades in 40ms apart.
@@ -51,8 +53,8 @@ export function LobbyLive({
     });
   }
 
-  // Toasts come from comparing each server refresh with the last, not from event
-  // payloads: a removal before the draw sends no event we can receive.
+  // Toasts come from comparing each server refresh with the last; the live
+  // subscription only says that something changed.
   const previous = useRef(members);
   useEffect(() => {
     const before = new Map(previous.current.map((m) => [m.id, m]));
@@ -66,41 +68,20 @@ export function LobbyLive({
     previous.current = members;
   }, [members]);
 
+  const refresh = useCallback(() => router.refresh(), [router]);
+
+  // A tab that slept may have missed updates while its socket was down.
   useEffect(() => {
-    const supabase = createClient();
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let cancelled = false;
-    const refresh = () => router.refresh();
-
-    // Join with the user's token, not anon; RLS would otherwise hide every event.
-    supabase.auth.getSession().then(async ({ data }) => {
-      await supabase.realtime.setAuth(data.session?.access_token ?? null);
-      if (cancelled) return;
-      channel = supabase
-        .channel(`lobby:${groupId}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "members", filter: `group_id=eq.${groupId}` },
-          refresh,
-        )
-        .subscribe();
-    });
-
-    // Catches what Realtime can't send under rule 6: removals before the draw, and the draw.
     const onVisible = () => document.visibilityState === "visible" && refresh();
     document.addEventListener("visibilitychange", onVisible);
-
-    return () => {
-      cancelled = true;
-      document.removeEventListener("visibilitychange", onVisible);
-      if (channel) supabase.removeChannel(channel);
-    };
-  }, [groupId, router]);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [refresh]);
 
   const unwrapped = members.filter((m) => m.unwrapped).length;
 
   return (
     <>
+      {live && <LobbyPulse groupId={groupId} live={live} onChange={refresh} />}
       <section
         aria-live="polite"
         className="flex flex-col gap-3 rounded-[22px] bg-spruce p-5 text-white"

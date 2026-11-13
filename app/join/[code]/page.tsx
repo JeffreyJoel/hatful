@@ -1,9 +1,11 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { asUser } from "@/lib/db";
 import { getSession } from "@/lib/auth/server";
 import { formatMoney, formatSwapDate, inviteTitle } from "@/lib/format";
 import { TagString } from "@/components/icons";
+import { ghostOnSpruce } from "@/lib/ui";
 import { Wordmark } from "@/components/wordmark";
 import { JoinForm } from "./join-form";
 
@@ -68,7 +70,12 @@ async function Invite({ params }: Pick<PageProps<"/join/[code]">, "params">) {
     <>
       <div className="relative mt-[26px]">
         <TagString className="absolute left-5 -top-11" />
-        <div className="tag-drop flex -rotate-3 flex-col gap-3.5 rounded-[22px] bg-card px-6 pt-[26px] pb-6 text-ink shadow-[0_18px_0_var(--spruce-deep)]">
+        <div className="tag-drop relative flex -rotate-3 flex-col gap-3.5 rounded-[22px] bg-card px-6 pt-[26px] pb-6 text-ink shadow-[0_18px_0_var(--spruce-deep)]">
+          {!invite.is_open && (
+            <span className="absolute -top-3.5 right-[18px] rotate-[7deg] rounded-[10px] bg-berry px-3 py-1.5 font-display text-sm font-extrabold tracking-[0.08em] text-white uppercase shadow-[0_3px_0_var(--spruce-deep)]">
+              Hat closed
+            </span>
+          )}
           <div className="flex items-center gap-3">
             <span aria-hidden="true" className="size-5 shrink-0 rounded-full bg-spruce" />
             <span className="text-xs font-bold tracking-[0.12em] text-berry-text uppercase">
@@ -101,10 +108,18 @@ async function Invite({ params }: Pick<PageProps<"/join/[code]">, "params">) {
           signedInEmail={session?.user ? session.user.email : null}
         />
       ) : (
-        <p className="mt-[22px] text-[15px] leading-[1.45] text-on-spruce-soft">
-          The hat closed when names were drawn, so nobody new can join this round. If you
-          should be in it, ask {organiser}.
-        </p>
+        <>
+          <p className="mt-[22px] text-[15px] leading-[1.45] text-on-spruce-soft">
+            Nobody new can join this round. If you should be in it, ask {organiser}.
+          </p>
+          <div className="flex-1" />
+          {!userId && (
+            // Signed back in, this page sends members on to their group.
+            <Link href={`/sign-in?next=${encodeURIComponent(`/join/${code}`)}`} className={ghostOnSpruce}>
+              I&apos;m in this group, sign in
+            </Link>
+          )}
+        </>
       )}
     </>
   );

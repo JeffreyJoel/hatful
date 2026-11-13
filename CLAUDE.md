@@ -45,9 +45,10 @@ Build steps 1 to 7 are done. Steps 8 (motion and reduced-motion pass) and 9 (dep
 
 ```
 app/
-  page.tsx                 landing, names in the hat               (design: Landing)
+  page.tsx                 landing, names in the hat; signed in: your groups (design: Landing)
   new/page.tsx             create group form + invite preview      (design: NewGroup)
   join/[code]/page.tsx     invite card, name + email            (design: Main)
+  sign-in/page.tsx         email + code for returning members, ?next= back to /g/ or /join/
   auth/confirm/route.ts    magic link landing (session already set), then join/create
   api/auth/[...path]       Neon Auth proxy
   api/lobby/[id]/live      renews the lobby's sealed Realtime query
@@ -66,8 +67,10 @@ components/                lobby-live.tsx, draw-names.tsx, house-rules.tsx, unwr
 lib/db.ts                  pg pool + asUser(); the only way to Postgres
 lib/auth/server.ts         Neon Auth (createNeonAuth), getSession, currentUserId, sendMagicLink
 lib/realtime.ts            seals the lobby_pulse query
+lib/my-groups.ts           the signed-in user's groups for the landing page; safeNext()
 components/lobby-pulse.tsx subscribes to it and refreshes the lobby on change
-proxy.ts                   Next 16's middleware: auth.middleware(), only /g/* is private
+proxy.ts                   Next 16's middleware: auth.middleware(), only /g/* is private;
+                           signed-out /g/* goes to /sign-in?next=
 ```
 
 Next 16 runs with `cacheComponents`: anything reading cookies, `params` or `searchParams`

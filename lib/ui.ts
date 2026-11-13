@@ -10,6 +10,7 @@ export const labelOnSpruce = "text-[13px] font-medium text-on-spruce-soft";
 export const primaryButton = `press flex h-[58px] w-full items-center justify-center rounded-[18px] bg-berry font-display text-[19px] font-bold text-white disabled:opacity-70`;
 export const primaryOnSpruce = `${primaryButton} ${focusGold}`;
 export const primaryOnSnow = `${primaryButton} ${focusBerry}`;
+export const ghostOnSpruce = `press flex h-[58px] w-full items-center justify-center rounded-[18px] border-[1.5px] border-on-spruce-soft font-display text-[19px] font-bold text-white ${focusGold}`;
 
 export const alertBox = "rounded-xl bg-gold px-3 py-2.5 text-[13px] text-ink";
 

@@ -39,14 +39,27 @@ async function verified(rawBody: string, headers: Headers) {
 }
 
 // Traced into the function by outputFileTracingIncludes in next.config.ts.
-let templates: { html: string; text: string } | null = null;
+type Attachment = { filename: string; content: string; content_id: string };
+let templates: { html: string; text: string; images: Attachment[] } | null = null;
 async function loadTemplates() {
   if (templates) return templates;
   const read = (name: string) => readFile(path.join(process.cwd(), "emails", name), "utf8");
-  const [html, text] = await Promise.all([read("sign-in-code.html"), read("sign-in-code.txt")]);
-  templates ??= {
+  // Attached inline (cid:) so they show without the client fetching remote images.
+  const image = async (id: string): Promise<Attachment> => ({
+    filename: `${id}.png`,
+    content_id: id,
+    content: (await readFile(path.join(process.cwd(), "public", "email", `${id}.png`))).toString("base64"),
+  });
+  const [html, text, ...images] = await Promise.all([
+    read("sign-in-code.html"),
+    read("sign-in-code.txt"),
+    image("hat"),
+    image("tag-string"),
+  ]);
+  templates = {
     html: html.replace(/^<!--[\s\S]*?-->\s*/, ""),
     text: text.replace(/^##.*\n/gm, ""),
+    images,
   };
   return templates;
 }
@@ -72,13 +85,8 @@ export async function POST(request: Request) {
   const code = event.event_data.otp_code.replace(/\D/g, "");
   const ms = Date.parse(event.event_data.expires_at) - Date.parse(event.timestamp);
   const minutes = Math.max(1, Math.round(ms / 60_000));
-  const values = {
-    code,
-    expires_in: minutes === 1 ? "1 minute" : `${minutes} minutes`,
-    // The template's images live in public/email/ on the deployed site.
-    site_url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://hatful-handover.vercel.app").replace(/\/$/, ""),
-  };
-  const { html, text } = await loadTemplates();
+  const values = { code, expires_in: minutes === 1 ? "1 minute" : `${minutes} minutes` };
+  const { html, text, images } = await loadTemplates();
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -94,6 +102,7 @@ export async function POST(request: Request) {
       subject: `Your Hatful code: ${code}`,
       html: fill(html, values),
       text: fill(text, values),
+      attachments: images,
     }),
   });
 

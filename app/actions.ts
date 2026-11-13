@@ -31,6 +31,11 @@ async function sendCode(email: string): Promise<FormState> {
   };
 }
 
+// Sign in on its own, for people coming back to a group they're already in.
+export async function requestSignIn(_prev: FormState, form: FormData): Promise<FormState> {
+  return sendCode(String(form.get("email") ?? "").trim());
+}
+
 // Signed in: join straight away. Signed out: email a sign-in code.
 export async function requestJoin(_prev: FormState, form: FormData): Promise<FormState> {
   const code = String(form.get("code") ?? "");

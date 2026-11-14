@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { asUser } from "@/lib/db";
 import { currentUserId } from "@/lib/auth/server";
 
@@ -25,7 +25,8 @@ export const getGroup = cache(async (id: string) => {
   if (!UUID.test(id)) notFound();
 
   const userId = await currentUserId();
-  if (!userId) notFound();
+  // proxy.ts only checks that a session cookie exists; an expired one lands here.
+  if (!userId) redirect(`/sign-in?next=/g/${id}`);
 
   // RLS hides groups the caller isn't in, so a missing row covers both cases.
   const { group, me } = await asUser(userId, async (db) => {

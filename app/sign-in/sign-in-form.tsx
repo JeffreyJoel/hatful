@@ -18,7 +18,6 @@ export function SignInForm({ next }: { next: string | null }) {
     return (
       <CheckEmail
         email={state.email}
-        name=""
         outcome={next ? "you'll go straight back" : "you'll see your groups"}
         onSignedIn={() => {
           router.replace(next ?? "/");

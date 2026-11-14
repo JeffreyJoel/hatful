@@ -6,7 +6,7 @@ select no_plan();
 
 create temp table people (name text primary key, uid uuid not null default gen_random_uuid());
 insert into people (name) values ('amara'), ('tunde'), ('priya');
-insert into neon_auth."user" (id, name, email, "emailVerified")
+insert into app_auth."user" (id, name, email, "emailVerified")
 select uid, name, name || '@test.local', true from people;
 
 create function pg_temp.login(who text) returns void language plpgsql as $$
@@ -49,7 +49,7 @@ select pg_temp.login('tunde');
 select is(lobby_version('00000000-0000-0000-0000-0000000000b1'), '5', 'a member reads the lobby version');
 select pg_temp.logout();
 insert into people (name) values ('outsider');
-insert into neon_auth."user" (id, name, email, "emailVerified")
+insert into app_auth."user" (id, name, email, "emailVerified")
 select uid, name, name || '@test.local', true from people where name = 'outsider';
 select pg_temp.login('outsider');
 select is(lobby_version('00000000-0000-0000-0000-0000000000b1'), null, 'an outsider gets no version');

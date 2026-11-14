@@ -19,7 +19,7 @@ declare
 begin
   for i in 1..n loop
     u := gen_random_uuid();
-    insert into neon_auth."user" (id, name, email, "emailVerified")
+    insert into app_auth."user" (id, name, email, "emailVerified")
     values (u, u::text, u || '@test.local', true);
     uids := uids || u;
   end loop;

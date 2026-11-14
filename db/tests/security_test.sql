@@ -14,7 +14,7 @@ grant select on tests.people to authenticated;
 
 insert into tests.people
 select n, gen_random_uuid() from unnest(array['amara','tunde','priya','leo','sofia','outsider']) n;
-insert into neon_auth."user" (id, name, email, "emailVerified")
+insert into app_auth."user" (id, name, email, "emailVerified")
 select uid, name, name || '@test.local', true from tests.people;
 
 create function tests.uid(who text) returns uuid

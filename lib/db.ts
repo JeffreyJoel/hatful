@@ -9,7 +9,16 @@ types.setTypeParser(types.builtins.TIMESTAMPTZ, (v) =>
   new Date(v.replace(" ", "T").replace(/([+-]\d\d)$/, "$1:00")).toISOString(),
 );
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// pg treats sslmode=require (Neon's default URL) as verify-full today but will weaken it
+// to libpq's meaning in v9; asking for verify-full keeps certificate checks either way.
+function connectionString(url = process.env.DATABASE_URL) {
+  if (!url) return url;
+  const u = new URL(url);
+  if (u.searchParams.get("sslmode") === "require") u.searchParams.set("sslmode", "verify-full");
+  return u.toString();
+}
+
+const pool = new Pool({ connectionString: connectionString() });
 // Lets Vercel Fluid compute close idle clients before a function instance suspends.
 attachDatabasePool(pool);
 

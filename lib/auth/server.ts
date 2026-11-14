@@ -34,6 +34,8 @@ function createAuth() {
       emailOTP({
         otpLength: 6,
         expiresIn: CODE_TTL_SECONDS,
+        // Per IP. The default of 3 a minute locks out a group joining from one office.
+        rateLimit: { window: 60, max: 10 },
         // Awaited so the function isn't frozen mid-send after responding; a refused
         // send is noted for sendSignInCode below, as Better Auth swallows it.
         sendVerificationOTP: ({ email, otp }) =>

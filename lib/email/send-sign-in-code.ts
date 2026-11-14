@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import nodemailer, { type Transporter } from "nodemailer";
 import { renderSignInCode } from "./render-sign-in-code";
+import { smtpTimeouts } from "./smtp";
 
 // Traced into every function by outputFileTracingIncludes in next.config.ts.
 type Assets = { html: string; text: string; images: { filename: string; content: Buffer; cid: string }[] };
@@ -32,6 +33,7 @@ const getTransport = () =>
     port: 465,
     secure: true,
     auth: { user: "resend", pass: process.env.RESEND_API_KEY },
+    ...smtpTimeouts,
   }));
 
 // Throws if SMTP refuses, so the caller can tell the person the code was not sent.

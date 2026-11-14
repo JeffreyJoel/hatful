@@ -89,7 +89,8 @@ must sit inside `<Suspense>` or the build fails. Read `node_modules/next/dist/do
 Sign-in is a 6-digit emailed code, valid for 5 minutes. The app sends the email itself
 (`Hatful <santa@thebadman.dev>`, override with `EMAIL_FROM`) through `smtp.resend.com`.
 Request the code with `sendSignInCode` in `lib/auth/server.ts`, not `auth.api`: only the
-HTTP handler applies the rate limit (3 a minute per IP, counted in `app_auth."rateLimit"`).
+HTTP handler applies the rate limit (10 a minute per IP, for sends and for code entries,
+counted in `app_auth."rateLimit"`).
 Better Auth is given `schemaName: "app_auth"` because Neon's pooled connection refuses a
 `search_path` startup option.
 

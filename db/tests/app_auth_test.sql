@@ -11,10 +11,9 @@ select has_table('app_auth', 'verification', 'app_auth.verification exists');
 select has_table('app_auth', 'rateLimit', 'app_auth.rateLimit exists');
 select col_type_is('app_auth', 'user', 'id', 'uuid', 'user ids are uuid');
 
-select is((select count(*) from app_auth."user"),
-          (select count(*) from neon_auth."user"), 'every user was copied');
+-- Not a count comparison: people who sign up after the move exist only in app_auth.
 select is((select count(*) from app_auth."user" a join neon_auth."user" n using (id, email)),
-          (select count(*) from neon_auth."user"), 'ids and emails are unchanged');
+          (select count(*) from neon_auth."user"), 'every user was copied with the same id and email');
 
 select fk_ok('public', 'members', 'user_id', 'app_auth', 'user', 'id');
 select fk_ok('public', 'groups', 'owner_id', 'app_auth', 'user', 'id');

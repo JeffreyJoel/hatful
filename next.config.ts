@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // The sign-in code email reads its templates from disk at runtime, from any route.
   outputFileTracingIncludes: {
-    "/*": ["./emails/**/*", "./public/email/**/*"],
+    "/*": ["./emails/**/*"],
   },
   turbopack: {
     rules: {

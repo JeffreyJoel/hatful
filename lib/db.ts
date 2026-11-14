@@ -11,7 +11,7 @@ types.setTypeParser(types.builtins.TIMESTAMPTZ, (v) =>
 
 // pg treats sslmode=require (Neon's default URL) as verify-full today but will weaken it
 // to libpq's meaning in v9; asking for verify-full keeps certificate checks either way.
-function connectionString(url = process.env.DATABASE_URL) {
+export function connectionString(url = process.env.DATABASE_URL) {
   if (!url) return url;
   const u = new URL(url);
   if (u.searchParams.get("sslmode") === "require") u.searchParams.set("sslmode", "verify-full");

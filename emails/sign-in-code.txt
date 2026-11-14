@@ -1,4 +1,4 @@
-## Plain-text part of the send.otp email; see sign-in-code.html. Lines starting "##" are stripped.
+## Plain-text part of the sign-in code email; see sign-in-code.html. Lines starting "##" are stripped.
 Hatful
 
 Here's your code to get into the hat:

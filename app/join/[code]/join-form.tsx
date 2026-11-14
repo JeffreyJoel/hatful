@@ -25,7 +25,6 @@ export function JoinForm({
     return (
       <CheckEmail
         email={state.email}
-        name={String(submitted?.get("name") ?? "")}
         outcome="your name goes in the hat"
         onSignedIn={() => submitted && startTransition(() => action(submitted))}
         onRetry={() => setRetrying(true)}

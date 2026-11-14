@@ -8,13 +8,11 @@ import { alertBox, fieldOnSpruce as field, labelOnSpruce as label, primaryOnSpru
 // itself signed in and joins or creates the group.
 export function CheckEmail({
   email,
-  name,
   outcome,
   onSignedIn,
   onRetry,
 }: {
   email: string;
-  name: string;
   outcome: string;
   onSignedIn: () => void;
   onRetry: () => void;
@@ -29,8 +27,7 @@ export function CheckEmail({
     if (otp.length !== 6) return setError("Enter the 6 digits from the email.");
     setPending(true);
     setError(null);
-    // `name` names the account if this email is new.
-    const { error } = await authClient.signIn.emailOtp({ email, otp, name });
+    const { error } = await authClient.signIn.emailOtp({ email, otp });
     if (error) {
       setPending(false);
       setError(

@@ -26,7 +26,6 @@ export function NewGroupForm({
     return (
       <CheckEmail
         email={state.email}
-        name={String(submitted?.get("name") ?? "")}
         outcome="your group is ready to share"
         onSignedIn={() => submitted && startTransition(() => action(submitted))}
         onRetry={() => setRetrying(true)}

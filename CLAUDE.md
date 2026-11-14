@@ -3,8 +3,9 @@
 A Secret Santa app. A group joins by invite link, names are drawn once on the server,
 and each person unwraps their own match in private.
 
-Stack: Next.js (App Router, TypeScript, Tailwind), Neon (Postgres with RLS, Neon Auth
-magic link, Neon Realtime), Motion, Sonner, Vaul. Deployed on Vercel.
+Stack: Next.js (App Router, TypeScript, Tailwind), Neon (Postgres with RLS, Neon
+Realtime), Better Auth (email code sign-in, run inside the app), Nodemailer over Resend
+SMTP, Motion, Sonner, Vaul. Deployed on Vercel.
 
 ## Status
 
@@ -15,8 +16,13 @@ Build steps 1 to 7 are done. Steps 8 (motion and reduced-motion pass) and 9 (dep
 - `db/migrations/` holds 0000 to 0008, applied to the Neon `production` branch and tested
   with pgTAP (`db/tests/`). `db/run.sh migrate|test [branch]` runs them. 0000 rebuilds the
   Supabase pieces the rest rely on: the `authenticated`/`anon` roles and `auth.uid()`.
-  0007/0008 add `lobby_pulse`, the counter the lobby subscribes to.
-- `neon.ts` declares Auth and Realtime (with its allowed origins); `neon deploy` applies it.
+  0007/0008 add `lobby_pulse`, the counter the lobby subscribes to. 0009 adds `app_auth`,
+  Better Auth's own schema (`user`, `session`, `account`, `verification`, `rateLimit`),
+  copies the users from `neon_auth` with their ids and points `groups.owner_id` and
+  `members.user_id` at it. `authenticated` and `anon` have no access to `app_auth`.
+- `neon.ts` declares Realtime (with its allowed origins); `neon deploy` applies it. It
+  still declares Auth until the production cutover is settled; nothing in the app uses it.
+- `npm test` runs the unit tests (`lib/**/*.test.ts`, Node's test runner).
 - `docs/design/canvas.json` — the design canvas index: board order, titles and the motion
   notes for each screen.
 - `docs/design/*.dc.html` — the seven approved screens. These are mockups written for a
@@ -32,7 +38,8 @@ Build steps 1 to 7 are done. Steps 8 (motion and reduced-motion pass) and 9 (dep
    functions. Never add a policy, view or query that lets anyone else read it.
 3. Every query goes through `asUser()` in `lib/db.ts`, which drops to `authenticated` or
    `anon` and sets the user for `auth.uid()`. `DATABASE_URL`'s owner role bypasses RLS, so
-   never query the pool directly.
+   never query the pool directly. One exception: Better Auth (`lib/auth/server.ts`) has
+   its own pool and reads and writes `app_auth` as the owner. App data never uses it.
 4. The draw page must not load the match on the server. The client calls
    `reveal_my_match` only when the hold completes.
 5. `/g/[id]/match` redirects to `/g/[id]/draw` while `members.unwrapped_at` is null.
@@ -49,8 +56,7 @@ app/
   new/page.tsx             create group form + invite preview      (design: NewGroup)
   join/[code]/page.tsx     invite card, name + email            (design: Main)
   sign-in/page.tsx         email + code for returning members, ?next= back to /g/ or /join/
-  auth/confirm/route.ts    magic link landing (session already set), then join/create
-  api/auth/[...path]       Neon Auth proxy
+  api/auth/[...path]       Better Auth's handler (send code, sign in, session)
   api/lobby/[id]/live      renews the lobby's sealed Realtime query
   g/[id]/layout.tsx        loads group + my member row, 404 if not a member
   g/[id]/page.tsx          lobby                                 (design: Lobby)
@@ -65,24 +71,33 @@ components/                lobby-live.tsx, draw-names.tsx, house-rules.tsx, unwr
                            wish-drawer.tsx, hat-of-names.tsx, icons.tsx (all artwork
                            from the designs: hat logo, tag string, no-entry, lock, info)
 lib/db.ts                  pg pool + asUser(); the only way to Postgres
-lib/auth/server.ts         Neon Auth (createNeonAuth), getSession, currentUserId, sendMagicLink
+lib/auth/server.ts         Better Auth (emailOTP), getSession, currentUserId, sendSignInCode
+lib/auth/send-outcome.ts   carries a failed email send past Better Auth, which swallows it
+lib/auth/client.ts         authClient; the code screen signs in with signIn.emailOtp
+lib/email/                 renders emails/sign-in-code.{html,txt} and sends it over SMTP
 lib/realtime.ts            seals the lobby_pulse query
 lib/my-groups.ts           the signed-in user's groups for the landing page; safeNext()
 components/lobby-pulse.tsx subscribes to it and refreshes the lobby on change
-proxy.ts                   Next 16's middleware: auth.middleware(), only /g/* is private;
-                           signed-out /g/* goes to /sign-in?next=
+proxy.ts                   Next 16's middleware: only /g/* is private. It checks that a
+                           session cookie exists and sends everyone else to
+                           /sign-in?next=; lib/group.ts verifies the session
 ```
 
 Next 16 runs with `cacheComponents`: anything reading cookies, `params` or `searchParams`
 must sit inside `<Suspense>` or the build fails. Read `node_modules/next/dist/docs/` first.
 
-Magic links come from Neon Auth. Magic Link must be enabled on the branch (Console only)
-and production needs custom SMTP; the shared sender doesn't guarantee links. Trusted
-domains: `neon neon-auth domain list`.
+Sign-in is a 6-digit emailed code, valid for 5 minutes. The app sends the email itself
+(`Hatful <santa@thebadman.dev>`, override with `EMAIL_FROM`) through `smtp.resend.com`.
+Request the code with `sendSignInCode` in `lib/auth/server.ts`, not `auth.api`: only the
+HTTP handler applies the rate limit (10 a minute per IP, for sends and for code entries,
+counted in `app_auth."rateLimit"`).
+Better Auth is given `schemaName: "app_auth"` because Neon's pooled connection refuses a
+`search_path` startup option.
 
-Env: `neon deploy` writes `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_REALTIME_URL`,
-`NEON_REALTIME_SECRET`. Also set `NEON_AUTH_COOKIE_SECRET` (32+ chars),
-`NEXT_PUBLIC_NEON_REALTIME_URL` (same as `NEON_REALTIME_URL`) and `NEXT_PUBLIC_SITE_URL`.
+Env: `neon deploy` writes `DATABASE_URL`, `NEON_REALTIME_URL`, `NEON_REALTIME_SECRET`.
+Also set `BETTER_AUTH_SECRET` (32+ random chars), `RESEND_API_KEY`,
+`NEXT_PUBLIC_NEON_REALTIME_URL` (same as `NEON_REALTIME_URL`) and `NEXT_PUBLIC_SITE_URL`
+(Better Auth's base URL; requests from any other origin are refused).
 
 ## Design tokens
 
@@ -136,15 +151,14 @@ wish animates height. Reduced motion drops the movement and blur and keeps the f
 1. Database project, run the migrations, and write a SQL test that runs a draw for
    3, 8 and 40 members and checks: no self-match, every member gives once and
    receives once, exclusions respected.
-2. Scaffold Next.js; auth with magic link, `auth/confirm`, middleware, `join_group`.
+2. Scaffold Next.js; auth with an emailed code, middleware, `join_group`.
 3. Create group and the lobby, static first, then Realtime.
 4. `draw_names` on the organiser's button, with house rules (exclusions).
 5. Draw screen: `unwrap.tsx` and `reveal_my_match`.
 6. Match screen, wishes and claims.
 7. Wishlist drawer with Vaul.
 8. Motion pass against the rules above, then a reduced-motion pass.
-9. Deploy to Vercel with the env above; add the domain to Neon Auth trusted domains and
-   Realtime allowed origins.
+9. Deploy to Vercel with the env above; add the domain to Realtime allowed origins.
 
 Not in v1: reminder emails, multiple rounds per group, real currency handling.
 

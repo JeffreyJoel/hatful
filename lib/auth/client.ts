@@ -1,5 +1,6 @@
 "use client";
-import { createAuthClient } from "@neon/auth/next";
+import { createAuthClient } from "better-auth/react";
+import { emailOTPClient } from "better-auth/client/plugins";
 
-// Talks to the same-origin /api/auth proxy, so sign-in sets this app's session cookie.
-export const authClient = createAuthClient();
+// Talks to this app's own /api/auth, so sign-in sets the session cookie here.
+export const authClient = createAuthClient({ plugins: [emailOTPClient()] });
